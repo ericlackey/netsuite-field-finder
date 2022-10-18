@@ -31,7 +31,6 @@ function addFieldFilterElement () {
 
     // Create the Field Filter Element on the page
     const fieldFilterDiv = document.createElement('div');
-    fieldFilterDiv.setAttribute('id','yayyyyyy');
     fieldFilterDiv.setAttribute('onmouseleave','this.style.display="none"'); // Hide the div when the mouse leaves
     fieldFilterDiv.id = 'fieldFilter';
     fieldFilterDiv.classList.add('uir-tooltip');
