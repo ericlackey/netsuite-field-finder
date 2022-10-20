@@ -1,0 +1,29 @@
+.ff_checkbox {
+    pointer-events:all;
+    width:18px;
+    height:18px;
+    vertical-align: middle;
+}
+
+.ff_textbox {
+    pointer-events:all;  
+}
+
+.ff_option {
+    display: inline-block;
+    font-size:12px;
+}
+
+.ff_div {
+    background-color:#EEEEEE;
+    position: sticky;
+    padding: 8px;
+    display: flex;
+    top: 0;
+    pointer-events: none;
+}
+
+.ff_fieldspan {
+    width:20%;
+    font-weight:bold;
+}

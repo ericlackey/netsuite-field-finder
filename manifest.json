@@ -5,18 +5,13 @@
     "description": "Allows user to filter the list of fields in Saved Search and provides an improved field list.",
     "content_scripts": [
         {
+          "css": ["css/ns_ss_fieldfilter.css"],
           "js": ["scripts/content.js"],
           "matches": [
             "https://*.app.netsuite.com/app/common/search/*"
           ],
           "all_frames": true
         }
-    ],
-    "background": {
-        "service_worker": "scripts/background.js"
-    },
-    "permissions": [
-        "storage"
     ],
     "web_accessible_resources": [{
         "resources": ["scripts/ns_ss_fieldfilter.js"],
