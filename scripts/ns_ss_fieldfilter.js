@@ -90,15 +90,14 @@ function prepareDropdown(fieldSelector) {
     const fieldFilter =  document.createElement('div');
     fieldFilter.classList.add('ff_div');
     if (searchType=='Transaction') {
-        fieldFilter.innerHTML = `<span class="ff_fieldspan"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_body_fields" checked onpointerdown="event.preventDefault();" onclick="filterDropdowns(${dropdownDiv.id});"/> Custom Body Fields</span>`;
-        fieldFilter.innerHTML += `<span class="ff_fieldspan"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_column_fields" checked onpointerdown="event.preventDefault();" onclick="filterDropdowns(${dropdownDiv.id});"/> Custom Column Fields</span>`;
+        fieldFilter.innerHTML = `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_custom_body_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_body_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Custom Body Fields</span>`;
+        fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_custom_column_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_column_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Custom Column Fields</span>`;
     } else {
-        fieldFilter.innerHTML += `<span class="ff_fieldspan"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_fields" checked onpointerdown="event.preventDefault();" onclick="filterDropdowns(${dropdownDiv.id});"/> Custom Fields</span>`;
+        fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_custom_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Custom Fields</span>`;
     }
-    fieldFilter.innerHTML += `<span class="ff_fieldspan"><input class="ff_checkbox" type="checkbox" id="ff_show_related_table_fields" checked onpointerdown="event.preventDefault();" onclick="filterDropdowns(${dropdownDiv.id});"/> Related Table Fields</span>`;
-    fieldFilter.innerHTML += `<span class="ff_fieldspan"><input class="ff_checkbox" type="checkbox" id="ff_show_native_fields" checked onpointerdown="event.preventDefault();" onclick="filterDropdowns(${dropdownDiv.id});"/> Native Fields</span>`;
-    fieldFilter.innerHTML += `<span class="ff_fieldspan"><input class="ff_textbox" type="text" id="ff_show_search_input" value="" onpointerdown="event.preventDefault();this.focus();" onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation(); filterDropdowns(${dropdownDiv.id});" onfocus=" event.preventDefault();"></span>`;
-
+    fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_related_table_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_related_table_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Related Table Fields</span>`;
+    fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_native_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_native_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Native Fields</span>`;
+    fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();"><input class="ff_textbox" type="text" id="ff_show_search_input" value="" onmouseup="event.stopPropagation();this.focus();"  onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});" ondblclick="event.preventDefault();this.select();"></span>`;
     dropdownDiv.insertBefore(fieldFilter,dropdownDiv.childNodes[1]);
 
 }
@@ -117,6 +116,15 @@ function handleFieldSelectorClick(event) {
     } catch (err) {
         console.error(`Error occurred while trying to find current selection for scrolling: ${err}`);
     }   
+}
+
+// Handles when a user clicks on the span containing the checkbox instead of the actual checkbox
+function handleSpanClick(checkboxId) {
+    const checkbox = document.getElementById(checkboxId);
+    checkbox.checked = checkbox.checked ? false : true;
+    const inputField = document.getElementById('ff_show_search_input');
+    inputField.focus();
+    return;
 }
 
 // Show or hide options based on current Field Filter selections

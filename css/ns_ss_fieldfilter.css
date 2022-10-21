@@ -17,7 +17,7 @@
 .ff_div {
     background-color:#EEEEEE;
     position: sticky;
-    padding: 8px;
+    padding: 4px;
     display: flex;
     top: 0;
     pointer-events: none;
@@ -26,4 +26,9 @@
 .ff_fieldspan {
     width:20%;
     font-weight:bold;
+    pointer-events:all;
+}
+
+.ff_fieldspan:hover {
+    background-color: #CCCCCC;
 }
