@@ -97,7 +97,10 @@ function prepareDropdown(fieldSelector) {
     }
     fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_related_table_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_related_table_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Related Table Fields</span>`;
     fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_native_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_native_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Native Fields</span>`;
-    fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();"><input class="ff_textbox" type="text" id="ff_show_search_input" value="" onmouseup="event.stopPropagation();this.focus();"  onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});" ondblclick="event.preventDefault();this.select();"></span>`;
+    if (searchType!='Transaction') {
+        fieldFilter.innerHTML += `<span class="ff_fieldspan" style="pointer-events:none;"></span>`
+    }
+    fieldFilter.innerHTML += `<span onclick="event.preventDefault();"><input class="ff_textbox" type="text" id="ff_show_search_input" value="" onmouseup="event.stopPropagation();this.focus();"  onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});" ondblclick="event.preventDefault();this.select();"></span>`;
     dropdownDiv.insertBefore(fieldFilter,dropdownDiv.childNodes[1]);
 
 }
