@@ -9,7 +9,6 @@ const params = new Proxy(new URLSearchParams(window.location.search), {
     get: (searchParams, prop) => searchParams.get(prop),
 });
 const searchType = params.searchtype;
-console.log(`The search type is ${searchType}`);
 
 // Define the Saved Search fields where we want to add filtering capability
 const fieldsToFilter = "input[id^='inpt_filterfilter'],input[id^='inpt_field'],input[id^='inpt_rffield'],input[id^='inpt_fffilter'],input[id^='inpt_sort']";
