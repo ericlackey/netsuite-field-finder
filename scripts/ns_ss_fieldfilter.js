@@ -65,7 +65,7 @@ function prepareDropdown(fieldSelector) {
             <span class="ff_option" style="width:35%;">${newFieldName}</span>
             <span class="ff_option" style="width:15%;">${fieldType}</span>
         `;
-        if (rfTypes && rfTypes[fieldId]) {
+        if (typeof rfTypes !== 'undefined' && rfTypes[fieldId]) {
             opt.innerHTML += `<span class="ff_option" style="width:15%;">${rfTypes[fieldId]}</span>`
         } else {
             opt.innerHTML += `<span class="ff_option" style="width:15%;"></span>`
@@ -192,13 +192,13 @@ function filterDropdowns (dropdownDiv) {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
                 opt.children[0].innerHTML = newFieldNameHTML;
                 if (opt.getAttribute('ff_fieldtype') != 'Related Field') {
-                    const newFieldIdHTML = opt.getAttribute('ff_fieldid').replace(searchRegex, '<mark class="highlight">$&</mark>');
+                    const newFieldIdHTML = opt.getAttribute('ff_fieldid').toLowerCase().replace(searchRegex, '<mark class="highlight">$&</mark>');
                     opt.children[3].innerHTML = newFieldIdHTML;
                 }
             } else {
                 opt.children[0].innerHTML = opt.getAttribute('ff_fieldname');
                 if (opt.getAttribute('ff_fieldtype') != 'Related Field') {
-                    opt.children[3].innerHTML = opt.getAttribute('ff_fieldid');
+                    opt.children[3].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
                 }
             }
         }
