@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "NetSuite Saved Search Field Filter",
-    "version": "0.3",
+    "version": "0.4",
     "description": "Allows user to filter the list of fields in Saved Search and provides an improved field list.",
     "content_scripts": [
         {
