@@ -2,7 +2,8 @@
 NetSuite Saved Search Field Filter
 
 
-
+### 0.5
+Change background color to match native Saved Search background color
 
 
 ### 0.4
