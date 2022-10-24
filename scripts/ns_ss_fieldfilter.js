@@ -5,10 +5,16 @@
 *
 */
 
-const params = new Proxy(new URLSearchParams(window.location.search), {
-    get: (searchParams, prop) => searchParams.get(prop),
-});
-const searchType = params.searchtype;
+const searchTypeElement = document.getElementById('searchtype');
+
+if (searchTypeElement) {
+    searchType = searchTypeElement.value;
+} else {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+    searchType = params.searchtype;
+}
 
 // Define the Saved Search fields where we want to add filtering capability
 const fieldsToFilter = "input[id^='inpt_filterfilter'],input[id^='inpt_field'],input[id^='inpt_rffield'],input[id^='inpt_fffilter'],input[id^='inpt_sort']";
@@ -103,6 +109,15 @@ function prepareDropdown(fieldSelector) {
     fieldFilter.innerHTML += `<span onclick="event.preventDefault();"><input class="ff_textbox" type="text" id="ff_show_search_input" value="" onmouseup="event.stopPropagation();this.focus();"  onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});" ondblclick="event.preventDefault();this.select();"></span>`;
     dropdownDiv.insertBefore(fieldFilter,dropdownDiv.childNodes[1]);
 
+    /*
+    const fieldFilterFooter =  document.createElement('div');
+    fieldFilterFooter.setAttribute('id','ff_footer');
+    fieldFilterFooter.classList.add('ff_div_footer');
+    fieldFilterFooter.textContent='Field Filter 0.4';
+    dropdownDiv.appendChild(fieldFilterFooter);
+    */
+
+
 }
 
 // Automatically scroll the div window to account for the filter settings element. Otherwise, selected field gets hidden behind it.
@@ -125,8 +140,6 @@ function handleFieldSelectorClick(event) {
 function handleSpanClick(checkboxId) {
     const checkbox = document.getElementById(checkboxId);
     checkbox.checked = checkbox.checked ? false : true;
-    const inputField = document.getElementById('ff_show_search_input');
-    inputField.focus();
     return;
 }
 
@@ -138,7 +151,7 @@ function filterDropdowns (dropdownDiv) {
         showCustomFields,
         showRelatedTableFields,
         showNativeFields,
-        searchInputField;
+        searchInputField
 
     if (searchType == 'Transaction') {
         showCustomBodyFields = document.getElementById('ff_show_custom_body_fields');
@@ -205,6 +218,14 @@ function filterDropdowns (dropdownDiv) {
                 }
             }
         }
+
+        /*
+        if (opt.style.display == 'block') {
+            fieldsShowing++;
+        }
+
+        ff_footer.textContent = `Found ${fieldsShowing} fields`;
+        */
 
         return true;
     });

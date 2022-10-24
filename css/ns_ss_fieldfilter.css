@@ -15,11 +15,26 @@
 }
 
 .ff_div {
-    background-color:#EEEEEE;
+    background-color:#E5E5E5;
     position: sticky;
     padding: 4px;
     display: flex;
     top: 0;
+    padding-right: 10px;
+    pointer-events: none;
+}
+
+.ff_div_footer {
+    background-color:#E5E5E5;
+    position: sticky;
+    padding: 4px;
+    padding-right: 15px;
+    display: block;
+    bottom: 0;
+    position: absolute;
+    opacity: 0.4;
+    text-align: right;
+    width: 100%;
     pointer-events: none;
 }
 
