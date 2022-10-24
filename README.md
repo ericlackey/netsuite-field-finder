@@ -4,6 +4,7 @@ NetSuite Saved Search Field Filter
 
 ### 0.5
 Change background color to match native Saved Search background color
+Fix issue where filter wasn't working correctly when editing/creating Transaction searches
 
 
 ### 0.4
