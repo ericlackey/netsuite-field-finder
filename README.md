@@ -1,6 +1,11 @@
 # netsuite-savedsearch-fieldfilter
 NetSuite Saved Search Field Filter
 
+## Summary
+
+A Chrome extension for NetSuite Saved Search that allows users to filter the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
+
+## Release Notes
 
 ### 0.5
 - Change background color to match native Saved Search background color
