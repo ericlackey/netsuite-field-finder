@@ -55,6 +55,8 @@ function prepareDropdown(fieldSelector) {
                 fieldType = 'Custom Column';
                 break;
             case "custrecord":
+            case "custentity":
+            case "custitem":
                 fieldType = 'Custom Field';
                 break;
             default:

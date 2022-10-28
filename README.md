@@ -7,10 +7,12 @@ A Chrome extension for NetSuite Saved Search that allows users to filter the lis
 
 ## Release Notes
 
+### 0.6
+- Fix issue where Custom Item and Custom Entity fields were not considered Custom Fields (https://github.com/ericlackey/netsuite-savedsearch-fieldfilter/issues/2)
+
 ### 0.5
 - Change background color to match native Saved Search background color
 - Fix issue where filter wasn't working correctly when editing/creating Transaction searches
-
 
 ### 0.4
 
