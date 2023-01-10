@@ -43,7 +43,6 @@ function prepareDropdown(fieldSelector) {
         let fieldType = '';
         const fieldIdPrefix = fieldId.split('_')[0].toLowerCase();
 
-
         switch(fieldIdPrefix) {
             case "custom":
                 fieldType = 'Native Field';
@@ -112,6 +111,27 @@ function prepareDropdown(fieldSelector) {
     dropdownDiv.insertBefore(fieldFilter,dropdownDiv.childNodes[1]);
 
     /*
+    * The following code detects if the selected option is at the top of the div
+    * and beneath the filtering fields. If it is, it scrolls the div so that it is visible.
+    */
+    const callback = (mutationList, observer) => {
+        for (const mutation of mutationList) {
+            if (mutation.attributeName=='class' && mutation.target.className=='dropdownSelected') {
+                let offsetDiff = mutation.target.offsetTop-mutation.target.parentElement.scrollTop;
+                if (offsetDiff<28) {
+                    mutation.target.parentElement.scrollBy({
+                        top: -32+offsetDiff,
+                        behavior: 'instant'
+                    });
+                }
+            }
+        }
+    };
+    const observer = new MutationObserver(callback);
+    const config = { attributes: true, childList: false, subtree: true };
+    observer.observe(dropdownDiv, config);
+
+    /*
     const fieldFilterFooter =  document.createElement('div');
     fieldFilterFooter.setAttribute('id','ff_footer');
     fieldFilterFooter.classList.add('ff_div_footer');
@@ -127,7 +147,7 @@ function handleFieldSelectorClick(event) {
     try {        
         const dropdown = getDropdown(event.target);
         if (dropdown.currentCell) {
-            const currentSelectionLocation = dropdown.currentCell.getBoundingClientRect();;
+            const currentSelectionLocation = dropdown.currentCell.getBoundingClientRect();
             dropdown.div.scrollBy({
                 top: -40,
                 behavior: 'instant'
