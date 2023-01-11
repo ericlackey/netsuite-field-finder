@@ -7,6 +7,9 @@ A Chrome extension for NetSuite Saved Search that allows users to filter the lis
 
 ## Release Notes
 
+### 0.8
+- Fix issue introduced in 0.7 where hovering over the field filter div in certain areas caused the field list to constantly scroll up.
+
 ### 0.7
 - Fix issue when using native browser search functionality on dropdown caused the selected option to be hidden behind the field filter form. Now detects when this happens and scrolls div automatically.
 
