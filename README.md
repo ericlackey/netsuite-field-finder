@@ -1,11 +1,18 @@
-# netsuite-savedsearch-fieldfilter
-NetSuite Saved Search Field Filter
+# netsuite-field-finder
+NetSuite Field Finder
 
 ## Summary
 
-A Chrome extension for NetSuite Saved Search that allows users to filter the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
+A Chrome extension for NetSuite Saved Search that allows users to quicky find fields by filtering the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
 
 ## Release Notes
+
+### 0.9
+- Rename Chrome extension to NetSuite Field Finder
+- Add capability to be used to select fields in Workflows
+- Modified the filtering checkboxes to only display if there is a corresponding field type in the dropdown.
+- Remove unneccessary prefixes on native field IDs
+- Refactor how the checkbox filters are created so no longer using innerHTML
 
 ### 0.8
 - Fix issue introduced in 0.7 where hovering over the field filter div in certain areas caused the field list to constantly scroll up.

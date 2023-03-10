@@ -3,6 +3,7 @@
     width:18px;
     height:18px;
     vertical-align: middle;
+    position: relative;
 }
 
 .ff_textbox {
@@ -24,24 +25,10 @@
     padding-right: 10px;
 }
 
-.ff_div_footer {
-    background-color:#E5E5E5;
-    position: sticky;
-    padding: 4px;
-    padding-right: 15px;
-    display: block;
-    bottom: 0;
-    position: absolute;
-    opacity: 0.4;
-    text-align: right;
-    width: 100%;
-    pointer-events: none;
-}
-
 .ff_fieldspan {
     width:20%;
     font-weight:bold;
-    pointer-events:all;
+    display: block;
 }
 
 .ff_fieldspan:hover {

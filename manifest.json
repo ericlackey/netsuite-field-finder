@@ -1,14 +1,15 @@
 {
     "manifest_version": 3,
-    "name": "NetSuite Saved Search Field Filter",
-    "version": "0.8",
-    "description": "Allows user to filter the list of fields in Saved Search and provides an improved field list.",
+    "name": "NetSuite Field Finder",
+    "version": "0.9",
+    "description": "Allows user to quickly find fields in Saved Search and Workflows. Also provides additional details about fields in dropdown.",
     "content_scripts": [
         {
           "css": ["css/ns_ss_fieldfilter.css"],
           "js": ["scripts/content.js"],
           "matches": [
-            "https://*.app.netsuite.com/app/common/search/*"
+            "https://*.app.netsuite.com/app/common/search/*",
+            "https://*.app.netsuite.com/app/common/workflow/setup/*"
           ],
           "all_frames": true
         }

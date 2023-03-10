@@ -5,19 +5,8 @@
 *
 */
 
-const searchTypeElement = document.getElementById('searchtype');
-
-if (searchTypeElement) {
-    searchType = searchTypeElement.value;
-} else {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-        get: (searchParams, prop) => searchParams.get(prop),
-    });
-    searchType = params.searchtype;
-}
-
 // Define the Saved Search fields where we want to add filtering capability
-const fieldsToFilter = "input[id^='inpt_filterfilter'],input[id^='inpt_field'],input[id^='inpt_rffield'],input[id^='inpt_fffilter'],input[id^='inpt_sort']";
+const fieldsToFilter = "input[id^='inpt_filterfilter'],input[id^='inpt_field'],input[id^='inpt_rffield'],input[id^='inpt_fffilter'],input[id^='inpt_sort'],input[id^='inpt_valuefield'],input[id^='inpt_filterfield']";
 
 // Prepare the dropdowns for Field Filter
 document.querySelectorAll(fieldsToFilter).forEach((el) => {
@@ -29,10 +18,11 @@ document.querySelectorAll(fieldsToFilter).forEach((el) => {
 function prepareDropdown(fieldSelector) {
 
     const dropdown = getDropdown(fieldSelector);
+
     dropdown.buildDiv();
     const dropdownDiv = dropdown.div;
     const options = dropdownDiv.childNodes;
-    
+
     options.forEach((opt, index) => {
         if (index==0) { 
             opt.style.cssText='display:none;';
@@ -78,7 +68,7 @@ function prepareDropdown(fieldSelector) {
             opt.innerHTML += `<span class="ff_option" style="width:15%;"></span>`
         }
         if (fieldType != 'Related Field') {
-            opt.innerHTML += `<span class="ff_option" style="width:35%;">${fieldId.toLowerCase()}</span>`
+            opt.innerHTML += `<span class="ff_option" style="width:35%;">${fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,'')}</span>`
         }
 
         opt.setAttribute('ff_fieldtype',fieldType);
@@ -94,19 +84,34 @@ function prepareDropdown(fieldSelector) {
     fieldSelector.setAttribute('dropdown',dropdownDiv.id);
     fieldSelector.addEventListener('click',handleFieldSelectorClick);
 
+
     const fieldFilter =  document.createElement('div');
     fieldFilter.classList.add('ff_div');
-    if (searchType=='Transaction') {
-        fieldFilter.innerHTML = `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_custom_body_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_body_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Custom Body Fields</span>`;
-        fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_custom_column_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_column_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Custom Column Fields</span>`;
-    } else {
-        fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_custom_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_custom_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Custom Fields</span>`;
+
+    fieldFilter.appendChild(createFilterCheckbox(dropdownDiv.id, 'ff_show_native_fields', 'Native Fields'));
+
+    // Determine what type of fields we have available so we only show filters for those types
+    const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
+    const customColumnFields = dropdown.valueArray.find(el => el.match(/^(custcol)/i)) ? true : false;
+    const customFields = dropdown.valueArray.find(el => el.match(/^(custitem|custrecord|custentity)/i)) ? true : false;
+    const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
+
+    if (customBodyFields) {
+        fieldFilter.appendChild(createFilterCheckbox(dropdownDiv.id, 'ff_show_custom_body_fields', 'Custom Body Fields'));
     }
-    fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_related_table_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_related_table_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Related Table Fields</span>`;
-    fieldFilter.innerHTML += `<span class="ff_fieldspan" onclick="event.preventDefault();handleSpanClick('ff_show_native_fields');filterDropdowns(${dropdownDiv.id});" onpointerdown="event.preventDefault();"><input class="ff_checkbox" type="checkbox" id="ff_show_native_fields" checked onpointerdown="event.preventDefault();" onclick="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});"/> Native Fields</span>`;
-    if (searchType!='Transaction') {
-        fieldFilter.innerHTML += `<span class="ff_fieldspan" style="pointer-events:none;"></span>`
+
+    if (customColumnFields) {
+        fieldFilter.appendChild(createFilterCheckbox(dropdownDiv.id, 'ff_show_custom_column_fields', 'Custom Column Fields'));
     }
+
+    if (customFields) {
+        fieldFilter.appendChild(createFilterCheckbox(dropdownDiv.id, 'ff_show_custom_fields', 'Custom Fields'));
+    }
+
+    if (relatedTableFields) {
+        fieldFilter.appendChild(createFilterCheckbox(dropdownDiv.id, 'ff_show_related_table_fields', 'Related Table Fields'));
+    }
+
     fieldFilter.innerHTML += `<span onclick="event.preventDefault();"><input class="ff_textbox" type="text" id="ff_show_search_input" value="" onmouseup="event.stopPropagation();this.focus();"  onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});" ondblclick="event.preventDefault();this.select();"></span>`;
     dropdownDiv.insertBefore(fieldFilter,dropdownDiv.childNodes[1]);
 
@@ -131,15 +136,24 @@ function prepareDropdown(fieldSelector) {
     const config = { attributes: true, childList: false, subtree: true };
     observer.observe(dropdownDiv, config);
 
-    /*
-    const fieldFilterFooter =  document.createElement('div');
-    fieldFilterFooter.setAttribute('id','ff_footer');
-    fieldFilterFooter.classList.add('ff_div_footer');
-    fieldFilterFooter.textContent='Field Filter 0.4';
-    dropdownDiv.appendChild(fieldFilterFooter);
-    */
+}
 
-
+function createFilterCheckbox(dropdownDivId, fieldId, title) {
+    const labelElement = document.createElement('label');
+    labelElement.setAttribute('for',fieldId);
+    labelElement.classList.add('ff_fieldspan');
+    labelElement.setAttribute('onpointerdown','event.preventDefault();');
+    const checkbox = document.createElement('input');
+    checkbox.classList.add('ff_checkbox');
+    checkbox.setAttribute('type','checkbox');
+    checkbox.setAttribute('id',fieldId);
+    checkbox.setAttribute('checked','');
+    checkbox.setAttribute('onpointerdown','event.preventDefault();');
+    checkbox.setAttribute('onclick',`event.stopImmediatePropagation();filterDropdowns(${dropdownDivId});`);
+    labelElement.appendChild(checkbox);
+    const textElement = document.createTextNode(title);
+    labelElement.appendChild(textElement);
+    return labelElement;
 }
 
 // Automatically scroll the div window to account for the filter settings element. Otherwise, selected field gets hidden behind it.
@@ -168,23 +182,12 @@ function handleSpanClick(checkboxId) {
 // Show or hide options based on current Field Filter selections
 function filterDropdowns (dropdownDiv) {
 
-    let showCustomBodyFields,
-        showCustomColumnFields,
-        showCustomFields,
-        showRelatedTableFields,
-        showNativeFields,
-        searchInputField
-
-    if (searchType == 'Transaction') {
-        showCustomBodyFields = document.getElementById('ff_show_custom_body_fields');
-        showCustomColumnFields = document.getElementById('ff_show_custom_column_fields');
-    } else {
-        showCustomFields = document.getElementById('ff_show_custom_fields');
-    }
-
-    showRelatedTableFields = document.getElementById('ff_show_related_table_fields');
-    showNativeFields = document.getElementById('ff_show_native_fields');
-    searchInputField = document.getElementById('ff_show_search_input');
+    const showCustomBodyFields = document.getElementById('ff_show_custom_body_fields') || false;
+    const showCustomColumnFields = document.getElementById('ff_show_custom_column_fields') || false;
+    const showCustomFields = document.getElementById('ff_show_custom_fields') || false;
+    const showRelatedTableFields = document.getElementById('ff_show_related_table_fields') || false;
+    const showNativeFields = document.getElementById('ff_show_native_fields') || false;
+    const searchInputField = document.getElementById('ff_show_search_input') || false;
 
     dropdownDiv.childNodes.forEach((opt, index) => {
 
@@ -240,14 +243,6 @@ function filterDropdowns (dropdownDiv) {
                 }
             }
         }
-
-        /*
-        if (opt.style.display == 'block') {
-            fieldsShowing++;
-        }
-
-        ff_footer.textContent = `Found ${fieldsShowing} fields`;
-        */
 
         return true;
     });
