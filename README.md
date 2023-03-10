@@ -8,7 +8,11 @@ A Chrome extension for NetSuite Saved Search that allows users to quicky find fi
 ## Release Notes
 
 ### 0.9
-- Fix issue introduced in 0.7 where hovering over the field filter div in certain areas caused the field list to constantly scroll up.
+- Rename Chrome extension to NetSuite Field Finder
+- Add capability to be used to select fields in Workflows
+- Modified the filtering checkboxes to only display if there is a corresponding field type in the dropdown.
+- Remove unneccessary prefixes on native field IDs
+- Refactor how the checkbox filters are created so no longer using innerHTML
 
 ### 0.8
 - Fix issue introduced in 0.7 where hovering over the field filter div in certain areas caused the field list to constantly scroll up.

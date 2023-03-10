@@ -5,8 +5,6 @@
 *
 */
 
-console.log('Loading field filter');
-
 // Define the Saved Search fields where we want to add filtering capability
 const fieldsToFilter = "input[id^='inpt_filterfilter'],input[id^='inpt_field'],input[id^='inpt_rffield'],input[id^='inpt_fffilter'],input[id^='inpt_sort'],input[id^='inpt_valuefield'],input[id^='inpt_filterfield']";
 
