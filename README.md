@@ -7,6 +7,9 @@ A Chrome extension for NetSuite that allows users to quicky find fields in Saved
 
 ## Release Notes
 
+### 0.10
+- Fix issue where script ID reverts back to original ID with full prefix after initial load
+
 ### 0.9
 - Rename Chrome extension to NetSuite Field Finder
 - Add capability to be used to select fields in Workflows
