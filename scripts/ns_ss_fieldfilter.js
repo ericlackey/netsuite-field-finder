@@ -58,6 +58,11 @@ function prepareDropdown(fieldSelector) {
         }
 
         let newFieldName = fieldName.replace(/\((Custom Body|Custom Column|Custom)\)/i,'');
+
+        opt.setAttribute('ff_fieldtype',fieldType);
+        opt.setAttribute('ff_fieldname',newFieldName);
+        opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
+
         opt.innerHTML = `
             <span class="ff_option" style="width:35%;">${newFieldName}</span>
             <span class="ff_option" style="width:15%;">${fieldType}</span>
@@ -68,12 +73,8 @@ function prepareDropdown(fieldSelector) {
             opt.innerHTML += `<span class="ff_option" style="width:15%;"></span>`
         }
         if (fieldType != 'Related Field') {
-            opt.innerHTML += `<span class="ff_option" style="width:35%;">${fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,'')}</span>`
+            opt.innerHTML += `<span class="ff_option" style="width:35%;">${opt.getAttribute('ff_fieldid')}</span>`
         }
-
-        opt.setAttribute('ff_fieldtype',fieldType);
-        opt.setAttribute('ff_fieldname',newFieldName);
-        opt.setAttribute('ff_fieldid',fieldId);
 
         return true;
     });
