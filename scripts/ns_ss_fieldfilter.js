@@ -180,10 +180,6 @@ function handleFieldSelectorClick(event) {
     }   
 }
 
-function handleFFClick(event) {
-    alert('hello');
-}
-
 // Handles when a user clicks on the span containing the checkbox instead of the actual checkbox
 function handleButtonClick(button, dropdownDivId) {
     if (button.value==1) {
