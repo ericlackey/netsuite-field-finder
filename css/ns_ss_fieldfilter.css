@@ -1,13 +1,6 @@
-.ff_checkbox {
-    pointer-events:all;
-    width:18px;
-    height:18px;
-    vertical-align: middle;
-    position: relative;
-}
-
 .ff_textbox {
-    pointer-events:all;  
+    pointer-events:all;
+    width: 180px;
 }
 
 .ff_option {
@@ -25,12 +18,37 @@
     padding-right: 10px;
 }
 
-.ff_fieldspan {
-    width:20%;
-    font-weight:bold;
+.ff_button {
+    width: 18%;
     display: block;
+    text-align: center;
+    border-color: gray;
+    border-style: solid;
+    margin-left: 5px;
+    margin-right: 5px;
+    border-width: 1px;
+    white-space: normal;
+    align-items: center;
+    font-size: 11px;
+    background-color: #FFFFFF;
 }
 
-.ff_fieldspan:hover {
-    background-color: #CCCCCC;
+.ff_button:hover {
+    border-width: 2px;
+}
+
+
+.ff_button_enabled {
+    background-color: #DFF1DF;
+}
+
+.ff_div_footer {
+    background-color:#E5E5E5;
+    position: sticky;
+    padding: 4px;
+    display: flex;
+    bottom: 0;
+    height: 20px;
+    padding-right: 10px;
+    visibility: hidden;
 }

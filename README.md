@@ -7,6 +7,11 @@ A Chrome extension for NetSuite that allows users to quicky find fields in Saved
 
 ## Release Notes
 
+### 0.11
+- Move search text box to left side since it is more commonly used than field type buttons
+- Removed checkboxes for field type filters and changed to buttons
+- Added footer that indicates number of fields displayed out of total fields
+
 ### 0.10
 - Fix issue where script ID reverts back to original ID with full prefix after initial load
 
