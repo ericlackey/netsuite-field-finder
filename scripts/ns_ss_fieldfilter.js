@@ -17,88 +17,56 @@ const fieldsToFilter = [
 ];
 
 // Prepare the dropdowns for Field Filter
-document.querySelectorAll(fieldsToFilter.join(',')).forEach((el) => {
-    prepareDropdown(el);
-    return true;
-});
+document.querySelectorAll(fieldsToFilter.join(',')).forEach((el) => prepareDropdown(el));
 
-// Prepare the dropdown for use with Field Filter
-function prepareDropdown(fieldSelector) {
+// Return a field type based on the field prefix
+function getFieldType(fieldIdPrefix) {
+    let fieldType;
+    switch(fieldIdPrefix) {
+        case "custbody":
+            fieldType = 'Custom Body';
+            break;
+        case "custcol":
+            fieldType = 'Custom Column';
+            break;
+        case "custrecord":
+        case "custentity":
+        case "custitem":
+            fieldType = 'Custom Field';
+            break;
+        default:
+            fieldType = 'Native Field';
+            break;
+    }
+    return fieldType;
+}
 
-    const dropdown = getDropdown(fieldSelector);
-
-    dropdown.buildDiv();
-    const dropdownDiv = dropdown.div;
-    const options = dropdownDiv.childNodes;
-
-    options.forEach((opt, index) => {
-        if (index==0) { 
-            opt.style.cssText='display:none;';
-        }
-
-        const fieldId = dropdown.valueArray[index];
-        const fieldName = dropdown.textArray[index];
-        let fieldType = '';
-        const fieldIdPrefix = fieldId.split('_')[0].toLowerCase();
-
-        switch(fieldIdPrefix) {
-            case "custom":
-                fieldType = 'Native Field';
-                break;
-            case "custbody":
-                fieldType = 'Custom Body';
-                break;
-            case "custcol":
-                fieldType = 'Custom Column';
-                break;
-            case "custrecord":
-            case "custentity":
-            case "custitem":
-                fieldType = 'Custom Field';
-                break;
-            default:
-                fieldType = 'Native Field';
-                break;
-        }
-
-        if (fieldName.endsWith('...')) {
-            fieldType = 'Related Field'
-        }
-
-        let newFieldName = fieldName.replace(/\((Custom Body|Custom Column|Custom)\)/i,'');
-
-        opt.setAttribute('ff_fieldtype',fieldType);
-        opt.setAttribute('ff_fieldname',newFieldName);
-        opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
-
-        opt.innerHTML = `
-            <span class="ff_option" style="width:35%;">${newFieldName}</span>
-            <span class="ff_option" style="width:15%;">${fieldType}</span>
-        `;
-        if (typeof rfTypes !== 'undefined' && rfTypes[fieldId]) {
-            opt.innerHTML += `<span class="ff_option" style="width:15%;">${rfTypes[fieldId]}</span>`
-        } else {
-            opt.innerHTML += `<span class="ff_option" style="width:15%;"></span>`
-        }
-        if (fieldType != 'Related Field') {
-            opt.innerHTML += `<span class="ff_option" style="width:35%;">${opt.getAttribute('ff_fieldid')}</span>`
-        }
-
-        return true;
-    });
-    
-    dropdownDiv.style.width='800px';
-    dropdownDiv.id = `${fieldSelector.id}_dropdown`;
-
-    fieldSelector.setAttribute('dropdown',dropdownDiv.id);
-    fieldSelector.addEventListener('click',handleFieldSelectorClick);
+// Add the Field Finder filter elements to the dropdown
+function addFieldFinderFilterElements(dropdown) {
 
     const fieldFilter =  document.createElement('div');
     fieldFilter.classList.add('ff_div');
     fieldFilter.setAttribute('onclick','event.preventDefault();');
     fieldFilter.setAttribute('onpointerdown','event.preventDefault();');
-    fieldFilter.innerHTML += `<span onclick="event.preventDefault();"><input class="ff_textbox" placeholder="Filter by Name or ID" type="text" id="ff_show_search_input" value="" onmouseup="event.stopPropagation();this.focus();" onkeydown="event.stopImmediatePropagation();" onkeypress="event.stopImmediatePropagation();" onkeyup="event.stopImmediatePropagation();filterDropdowns(${dropdownDiv.id});" ondblclick="event.preventDefault();this.select();" onclick="event.preventDefault();this.select();"></span>`;
-    fieldFilter.appendChild(createFilterButton(dropdownDiv.id, 'ff_show_native_fields', 'Native Fields'));
+
+    const searchTextInput = document.createElement('input');
+    searchTextInput.classList.add('ff_textbox');
+    searchTextInput.setAttribute('placeholder','Filter by Name or ID');
+    searchTextInput.setAttribute('type','text');
+    searchTextInput.setAttribute('id','ff_show_search_input');
+    searchTextInput.setAttribute('onmouseup','event.stopPropagation();this.focus();');
+    searchTextInput.setAttribute('onkeydown','event.stopImmediatePropagation();');
+    searchTextInput.setAttribute('onkeypress','event.stopImmediatePropagation();');
+    searchTextInput.setAttribute('onkeyup',`event.stopImmediatePropagation();filterDropdowns(${dropdown.div.id});`);
+    searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
+    searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
+
+    const searchTextElement = document.createElement('span');
+    searchTextElement.setAttribute('onclick','event.preventDefault();');
+    searchTextElement.appendChild(searchTextInput);
+    fieldFilter.appendChild(searchTextElement);
+
+    fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_native_fields', 'Native Fields'));
 
     // Determine what type of fields we have available so we only show filters for those types
     const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
@@ -107,58 +75,128 @@ function prepareDropdown(fieldSelector) {
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
 
     if (customBodyFields) {
-        fieldFilter.appendChild(createFilterButton(dropdownDiv.id, 'ff_show_custom_body_fields', 'Custom Body Fields'));
+        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_custom_body_fields', 'Custom Body Fields'));
     }
 
     if (customColumnFields) {
-        fieldFilter.appendChild(createFilterButton(dropdownDiv.id, 'ff_show_custom_column_fields', 'Custom Column Fields'));
+        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_custom_column_fields', 'Custom Column Fields'));
     }
 
     if (customFields) {
-        fieldFilter.appendChild(createFilterButton(dropdownDiv.id, 'ff_show_custom_fields', 'Custom Fields'));
+        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_custom_fields', 'Custom Fields'));
     }
 
     if (relatedTableFields) {
-        fieldFilter.appendChild(createFilterButton(dropdownDiv.id, 'ff_show_related_table_fields', 'Related Table Fields'));
+        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_related_table_fields', 'Related Table Fields'));
     }
 
-    dropdownDiv.insertBefore(fieldFilter,dropdownDiv.childNodes[1]);
+    dropdown.div.insertBefore(fieldFilter,dropdown.div.childNodes[0]);
+}
 
+// Add the Field Finder footer element to the dropdown
+function addFieldFinderFooterElement(dropdown) {
     const footerDiv = document.createElement('div');
     footerDiv.setAttribute('id','footerDiv');
     footerDiv.classList.add('ff_div_footer');
-    dropdownDiv.appendChild(footerDiv);
+    dropdown.div.appendChild(footerDiv);
+}
 
-    /*
-    * The following code detects if the selected option is at the top of the div
-    * and beneath the filtering fields. If it is, it scrolls the div so that it is visible.
-    */
-    const callback = (mutationList, observer) => {
-        for (const mutation of mutationList) {
-            if (mutation.attributeName=='class' && mutation.target.className=='dropdownSelected') {
-                let offsetDiff = mutation.target.offsetTop-mutation.target.parentElement.scrollTop;
-                if (offsetDiff<28) {
-                    mutation.target.parentElement.scrollBy({
-                        top: -32+offsetDiff,
-                        behavior: 'instant'
-                    });
-                }
-            }
-        }
-    };
-    const observer = new MutationObserver(callback);
-    const config = { attributes: true, childList: false, subtree: true };
-    observer.observe(dropdownDiv, config);
+/* Prepare Dropdown option */
+function prepareDropdownOption(dropdown, opt, index) {
+
+    if (index==0) {
+        opt.style.cssText = 'display:none;';
+    }
+
+    const fieldId = dropdown.valueArray[index];
+    const fieldName = dropdown.textArray[index];
+
+    let fieldType = getFieldType(fieldId.split('_')[0].toLowerCase());
+
+    if (fieldName.endsWith('Fields...')) {
+        fieldType = 'Related Fields'
+    }
+
+    const newFieldName = fieldName.replace(/\((Custom Body|Custom Column|Custom)\)/i,'');
+
+    opt.setAttribute('ff_fieldtype',fieldType);
+    opt.setAttribute('ff_fieldname',newFieldName);
+    opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
+    opt.textContent='';
+
+    const fieldNameElement = document.createElement('span');
+    fieldNameElement.classList.add('ff_option');
+    fieldNameElement.style.cssText = 'width:35%;';
+    fieldNameElement.textContent=newFieldName;
+
+    const fieldIdElement = document.createElement('span');
+    fieldIdElement.classList.add('ff_option');
+    fieldIdElement.style.cssText = 'width:35%;';
+    fieldIdElement.textContent = fieldType == 'Related Fields' ? '' : opt.getAttribute('ff_fieldid');
+
+    const fieldTypeElement = document.createElement('span');
+    fieldTypeElement.classList.add('ff_option');
+    fieldTypeElement.style.cssText = 'width:15%;';
+    fieldTypeElement.textContent=fieldType;
+
+    const fieldDataTypeElement = document.createElement('span');
+    fieldDataTypeElement.classList.add('ff_option');
+    fieldDataTypeElement.style.cssText = 'width:15%;';
+    fieldDataTypeElement.textContent = fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[fieldId] : '';
+
+    opt.appendChild(fieldNameElement);
+    opt.appendChild(fieldIdElement);
+    opt.appendChild(fieldTypeElement);
+    opt.appendChild(fieldDataTypeElement);
+
+    return true;
 
 }
 
+// Prepare the dropdown for use with Field Filter
+function prepareDropdown(fieldSelector) {
+
+    // Use NetSuite native functions to get access to the dropdown
+    const dropdown = getDropdown(fieldSelector);
+
+    if (!dropdown.div) {
+        dropdown.buildDiv();
+    }
+
+    // Increase width of the options element
+    dropdown.div.style.width='800px';
+
+    // Set the ID of the options element so we can access it later
+    dropdown.div.id = `${fieldSelector.id}_dropdown`;
+
+    // Set ID of dropdown div so we can access it later
+    fieldSelector.setAttribute('dropdown',dropdown.div.id);
+
+    // Add event listeners to handle when user clicks on field selector
+    fieldSelector.addEventListener('click',handleFieldSelectorClick);
+    document.getElementById(`${fieldSelector.id}_arrow`)?.addEventListener('click',handleFieldSelectorClick);
+
+    // Prepare each option in the dropdown list
+    dropdown.div.childNodes.forEach((opt, index) => prepareDropdownOption(dropdown, opt, index));
+
+    // Add the Field Finder filter elements to the dropdown
+    addFieldFinderFilterElements(dropdown);
+
+    // Add the Field Finder footer element to the dropdown
+    addFieldFinderFooterElement(dropdown);
+
+    return true;
+
+}
+
+// Add a field type button filter
 function createFilterButton(dropdownDivId, fieldId, title) {
     const buttonElement = document.createElement('button');
     buttonElement.classList.add('ff_button');
     buttonElement.setAttribute('onpointerdown','event.preventDefault();');
     buttonElement.setAttribute('id',fieldId);
     buttonElement.setAttribute('type','button');
-    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this, ${dropdownDivId});`);
+    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this,${dropdownDivId});`);
     buttonElement.setAttribute('value',0);
     buttonElement.innerText=title;
     return buttonElement;
@@ -166,18 +204,42 @@ function createFilterButton(dropdownDivId, fieldId, title) {
 
 // Automatically scroll the div window to account for the filter settings element. Otherwise, selected field gets hidden behind it.
 function handleFieldSelectorClick(event) {
-    try {        
-        const dropdown = getDropdown(event.target);
-        if (dropdown.currentCell) {
-            const currentSelectionLocation = dropdown.currentCell.getBoundingClientRect();
-            dropdown.div.scrollBy({
-                top: -40,
-                behavior: 'instant'
-            });
+
+    try {
+
+        const target = document.getElementById(event.target.id.replace(/\_arrow$/,''));
+        const dropdown = getDropdown(target);
+
+        /*
+        * NetSuite resets the dropdown if a related table field is selected
+        * so we must prep the dropdown again.
+        */
+        if (dropdown.div.id == '') {
+            prepareDropdown(target);
+        }
+
+        if (dropdown?.currentCell) {
+            const dropdownLocation = dropdown.div.getBoundingClientRect();
+            const selectedOptionLocation = dropdown.currentCell.getBoundingClientRect();
+            if (dropdownLocation?.x == selectedOptionLocation?.x) {
+                dropdown.div.scrollBy({
+                    top: -32,
+                    behavior: 'instant'
+                });
+            }
         }
     } catch (err) {
-        console.error(`Error occurred while trying to find current selection for scrolling: ${err}`);
-    }   
+        console.error(`An error occurred while: handling field selector click: ${err}`);
+    }
+
+    // Set focus to the text box if it exists.
+    setTimeout(setFocusOnTextBox,100);
+
+}
+
+// Automatically set focus on text box so that user can immediately start typing a search string
+function setFocusOnTextBox() {
+    document.getElementById('ff_show_search_input')?.focus();
 }
 
 // Handles when a user clicks on the span containing the checkbox instead of the actual checkbox
@@ -224,7 +286,7 @@ function filterDropdowns (dropdownDiv) {
 
         // Filter by field type
         switch(opt.getAttribute('ff_fieldtype')) {
-            case 'Related Field':
+            case 'Related Fields':
                 opt.style.display = showRelatedTableFields || !filterByFieldType ? 'block' : 'none';
                 break;
             case 'Custom Body':
@@ -259,14 +321,14 @@ function filterDropdowns (dropdownDiv) {
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
                 opt.children[0].innerHTML = newFieldNameHTML;
-                if (opt.getAttribute('ff_fieldtype') != 'Related Field') {
+                if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
                     const newFieldIdHTML = opt.getAttribute('ff_fieldid').toLowerCase().replace(searchRegex, '<mark class="highlight">$&</mark>');
-                    opt.children[3].innerHTML = newFieldIdHTML;
+                    opt.children[1].innerHTML = newFieldIdHTML;
                 }
             } else {
                 opt.children[0].innerHTML = opt.getAttribute('ff_fieldname');
-                if (opt.getAttribute('ff_fieldtype') != 'Related Field') {
-                    opt.children[3].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
+                if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
+                    opt.children[1].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
                 }
             }
         }
@@ -281,6 +343,7 @@ function filterDropdowns (dropdownDiv) {
         return true;
     });
 
+    // Display footer text with number of fields being shown
     const footerDiv = document.getElementById('footerDiv');
     if (fieldsTotal > fieldsDisplayed) {
         footerDiv.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields`;
