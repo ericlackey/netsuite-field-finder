@@ -17,7 +17,55 @@ const fieldsToFilter = [
 ];
 
 // Prepare the dropdowns for Field Filter
-document.querySelectorAll(fieldsToFilter.join(',')).forEach((el) => prepareDropdown(el));
+document.querySelectorAll(fieldsToFilter.join(',')).forEach((fieldSelector) => {
+    prepareDropdown(fieldSelector);
+    handleSelectorValueChange(fieldSelector);
+});
+
+// Observes value changes and resets field finder form
+function handleSelectorValueChange(fieldSelector) {
+
+    const dropdown = getDropdown(fieldSelector);
+
+    const callback = (mutationList, observer) => {
+        for (const mutation of mutationList) {
+            if (mutation.attributeName=='title') {
+                const previousTitle = dropdown.fieldFinder.currentTitle;
+                const currentTitle = mutation.target.getAttribute('title');
+                if (previousTitle && previousTitle != currentTitle) {
+                    resetFieldFinder(fieldSelector);
+                }
+                if (currentTitle) {
+                    dropdown.fieldFinder.currentTitle = currentTitle;
+                }
+            }
+        }
+    };
+
+    const observer = new MutationObserver(callback);
+    const config = { attributes: true, childList: false, subtree: false };
+    observer.observe(fieldSelector, config);
+
+}
+
+// Reset the Field Finder fields back to default when a new option is selected
+function resetFieldFinder(selector) {
+
+    const dropdown = getDropdown(selector);
+    dropdown.fieldFinder.searchInputField.value = '';
+
+    dropdown.fieldFinder.buttons.forEach((button) => {
+        button.classList.remove('ff_button_enabled');
+    });
+
+    dropdown.fieldFinder.customBodyFields = false;
+    dropdown.fieldFinder.customColumnFields = false;
+    dropdown.fieldFinder.customFields = false;
+    dropdown.fieldFinder.relatedTableFields = false;
+    dropdown.fieldFinder.nativeFields = false;
+    filterDropdowns(selector);
+
+}
 
 // Return a field type based on the field prefix
 function getFieldType(fieldIdPrefix) {
@@ -42,8 +90,9 @@ function getFieldType(fieldIdPrefix) {
 }
 
 // Add the Field Finder filter elements to the dropdown
-function addFieldFinderFilterElements(dropdown) {
+function addFieldFinderFilterElements(fieldSelector) {
 
+    const dropdown = getDropdown(fieldSelector);
     const fieldFilter =  document.createElement('div');
     fieldFilter.classList.add('ff_div');
     fieldFilter.setAttribute('onclick','event.preventDefault();');
@@ -57,16 +106,15 @@ function addFieldFinderFilterElements(dropdown) {
     searchTextInput.setAttribute('onmouseup','event.stopPropagation();this.focus();');
     searchTextInput.setAttribute('onkeydown','event.stopImmediatePropagation();');
     searchTextInput.setAttribute('onkeypress','event.stopImmediatePropagation();');
-    searchTextInput.setAttribute('onkeyup',`event.stopImmediatePropagation();filterDropdowns(${dropdown.div.id});`);
+    searchTextInput.setAttribute('onkeyup',`event.stopImmediatePropagation();filterDropdowns(${fieldSelector.id});`);
     searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
 
-    const searchTextElement = document.createElement('span');
-    searchTextElement.setAttribute('onclick','event.preventDefault();');
-    searchTextElement.appendChild(searchTextInput);
-    fieldFilter.appendChild(searchTextElement);
+    dropdown.fieldFinder = {};
+    dropdown.fieldFinder.searchInputField = fieldFilter.appendChild(searchTextInput);
 
-    fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_native_fields', 'Native Fields'));
+    dropdown.fieldFinder.buttons = [];
+    dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'nativeFields', 'Native Fields')));
 
     // Determine what type of fields we have available so we only show filters for those types
     const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
@@ -75,30 +123,58 @@ function addFieldFinderFilterElements(dropdown) {
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
 
     if (customBodyFields) {
-        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_custom_body_fields', 'Custom Body Fields'));
+        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'customBodyFields', 'Custom Body Fields')));
     }
 
     if (customColumnFields) {
-        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_custom_column_fields', 'Custom Column Fields'));
+        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'customColumnFields', 'Custom Column Fields')));
     }
 
     if (customFields) {
-        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_custom_fields', 'Custom Fields'));
+        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'customFields', 'Custom Fields')));
     }
 
     if (relatedTableFields) {
-        fieldFilter.appendChild(createFilterButton(dropdown.div.id, 'ff_show_related_table_fields', 'Related Table Fields'));
+        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'relatedTableFields', 'Related Table Fields')));
     }
+
+    dropdown.fieldFinder.nativeFields = false;
+    dropdown.fieldFinder.customBodyFields = false;
+    dropdown.fieldFinder.customColumnFields = false;
+    dropdown.fieldFinder.customFields = false;
+    dropdown.fieldFinder.relatedTableFields = false;
 
     dropdown.div.insertBefore(fieldFilter,dropdown.div.childNodes[0]);
 }
 
 // Add the Field Finder footer element to the dropdown
-function addFieldFinderFooterElement(dropdown) {
+function addFieldFinderFooterElement(fieldSelector) {
+    const dropdown = getDropdown(fieldSelector);
     const footerDiv = document.createElement('div');
     footerDiv.setAttribute('id','footerDiv');
     footerDiv.classList.add('ff_div_footer');
-    dropdown.div.appendChild(footerDiv);
+
+    filterStatusElement = document.createElement('span');
+    filterStatusElement.setAttribute('id','ffFilterStatus');
+    filterStatusElement.classList.add('ff_status');
+    footerDiv.appendChild(filterStatusElement);
+
+    titleElement = document.createElement('span');
+    titleElement.setAttribute('id','ffTitle');
+    titleElement.classList.add('ff_title');
+    titleElement.textContent = 'Filtered by ';
+    anchorElement = document.createElement('a');
+    anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
+    anchorElement.title='Filtered by NetSuite Field Finder 0.13';
+    anchorElement.textContent='NetSuite Field Finder 0.13';
+    anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
+    anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
+    anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
+
+    titleElement.appendChild(anchorElement);
+    footerDiv.appendChild(titleElement);
+
+    dropdown.fieldFinder.footer = dropdown.div.appendChild(footerDiv);
 }
 
 /* Prepare Dropdown option */
@@ -180,23 +256,23 @@ function prepareDropdown(fieldSelector) {
     dropdown.div.childNodes.forEach((opt, index) => prepareDropdownOption(dropdown, opt, index));
 
     // Add the Field Finder filter elements to the dropdown
-    addFieldFinderFilterElements(dropdown);
+    addFieldFinderFilterElements(fieldSelector);
 
     // Add the Field Finder footer element to the dropdown
-    addFieldFinderFooterElement(dropdown);
+    addFieldFinderFooterElement(fieldSelector);
 
     return true;
 
 }
 
 // Add a field type button filter
-function createFilterButton(dropdownDivId, fieldId, title) {
+function createFilterButton(fieldSelector, fieldId, title) {
     const buttonElement = document.createElement('button');
     buttonElement.classList.add('ff_button');
     buttonElement.setAttribute('onpointerdown','event.preventDefault();');
     buttonElement.setAttribute('id',fieldId);
     buttonElement.setAttribute('type','button');
-    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this,${dropdownDivId});`);
+    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this, ${fieldSelector.id});`);
     buttonElement.setAttribute('value',0);
     buttonElement.innerText=title;
     return buttonElement;
@@ -243,28 +319,34 @@ function setFocusOnTextBox() {
 }
 
 // Handles when a user clicks on the span containing the checkbox instead of the actual checkbox
-function handleButtonClick(button, dropdownDivId) {
-    if (button.value==1) {
+function handleButtonClick(button, fieldSelector) {
+    const dropdown = getDropdown(fieldSelector);
+    const previousValue = dropdown.fieldFinder[button.id];
+
+    if (previousValue) {
         button.classList.remove('ff_button_enabled');
-        button.value=0;
     } else {
         button.classList.add('ff_button_enabled');
-        button.value=1;
     }
-    filterDropdowns(dropdownDivId);
+
+    dropdown.fieldFinder[button.id] = previousValue ? false : true;
+
+    filterDropdowns(fieldSelector);
     return;
 }
 
 // Show or hide options based on current Field Filter selections
-function filterDropdowns (dropdownDiv) {
+function filterDropdowns (fieldSelector) {
 
-    const showCustomBodyFields = parseInt(((document.getElementById('ff_show_custom_body_fields')||{}).value)||0);
-    const showCustomColumnFields = parseInt(((document.getElementById('ff_show_custom_column_fields')||{}).value)||0);
-    const showCustomFields = parseInt(((document.getElementById('ff_show_custom_fields')||{}).value)||0);
-    const showRelatedTableFields = parseInt(((document.getElementById('ff_show_related_table_fields')||{}).value)||0);
-    const showNativeFields = parseInt(((document.getElementById('ff_show_native_fields')||{}).value)||0);
+    const dropdown = getDropdown(fieldSelector);
+    const dropdownDiv = dropdown.div;
 
-    const searchInputField = document.getElementById('ff_show_search_input');
+    const showCustomBodyFields = dropdown.fieldFinder.customBodyFields;
+    const showCustomColumnFields = dropdown.fieldFinder.customColumnFields;
+    const showCustomFields = dropdown.fieldFinder.customFields;
+    const showRelatedTableFields = dropdown.fieldFinder.relatedTableFields;
+    const showNativeFields = dropdown.fieldFinder.nativeFields;
+    const searchInputField = dropdown.fieldFinder.searchInputField;
 
     let fieldsDisplayed = 0;
     let fieldsTotal = 0;
@@ -344,9 +426,10 @@ function filterDropdowns (dropdownDiv) {
     });
 
     // Display footer text with number of fields being shown
-    const footerDiv = document.getElementById('footerDiv');
+    const footerDiv = dropdown.fieldFinder.footer;
+    const ffFilterStatus = footerDiv.childNodes[0];
     if (fieldsTotal > fieldsDisplayed) {
-        footerDiv.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields`;
+        ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
         footerDiv.style.visibility = 'visible';
     } else {
         footerDiv.style.visibility = 'hidden';

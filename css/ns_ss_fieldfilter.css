@@ -51,4 +51,14 @@
     height: 20px;
     padding-right: 10px;
     visibility: hidden;
+    width: 100%;
+}
+
+.ff_status {
+    width: 50%;
+}
+
+.ff_title {
+    width: 50%;
+    text-align: right;
 }
