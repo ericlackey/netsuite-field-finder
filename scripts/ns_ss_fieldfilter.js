@@ -68,23 +68,15 @@ function resetFieldFinder(selector) {
 }
 
 // Return a field type based on the field prefix
-function getFieldType(fieldIdPrefix) {
-    let fieldType;
-    switch(fieldIdPrefix) {
-        case "custbody":
-            fieldType = 'Custom Body';
-            break;
-        case "custcol":
-            fieldType = 'Custom Column';
-            break;
-        case "custrecord":
-        case "custentity":
-        case "custitem":
-            fieldType = 'Custom Field';
-            break;
-        default:
-            fieldType = 'Native Field';
-            break;
+function getFieldType(fieldId) {
+    fieldId = fieldId.toLowerCase();
+    let fieldType = 'Native Field';
+    if (fieldId.match(/^(custbody)/)) {
+        fieldType = 'Custom Body';
+    } else if (fieldId.match(/^(custcol)/)) {
+        fieldType = 'Custom Column';
+    } else if (fieldId.match(/^(custrecord|custentity|custitem)/)) {
+        fieldType = 'Custom Field';
     }
     return fieldType;
 }
@@ -165,8 +157,8 @@ function addFieldFinderFooterElement(fieldSelector) {
     titleElement.textContent = 'Filtered by ';
     anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='Filtered by NetSuite Field Finder 0.13';
-    anchorElement.textContent='NetSuite Field Finder 0.13';
+    anchorElement.title='Filtered by NetSuite Field Finder 0.14';
+    anchorElement.textContent='NetSuite Field Finder 0.14';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -187,7 +179,7 @@ function prepareDropdownOption(dropdown, opt, index) {
     const fieldId = dropdown.valueArray[index];
     const fieldName = dropdown.textArray[index];
 
-    let fieldType = getFieldType(fieldId.split('_')[0].toLowerCase());
+    let fieldType = getFieldType(fieldId);
 
     if (fieldName.endsWith('Fields...')) {
         fieldType = 'Related Fields'
