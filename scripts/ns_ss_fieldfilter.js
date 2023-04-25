@@ -19,10 +19,8 @@ const fieldsToFilter = [
 // Prepare the dropdowns for Field Filter
 document.querySelectorAll(fieldsToFilter.join(',')).forEach((fieldSelector) => {
     prepareDropdown(fieldSelector);
-    //handleSelectorValueChange(fieldSelector);
+    handleSelectorValueChange(fieldSelector);
 });
-
-//console.log(dropdowns);
 
 // Observes value changes and resets field finder form
 function handleSelectorValueChange(fieldSelector) {
@@ -83,36 +81,8 @@ function getFieldType(fieldId) {
     return fieldType;
 }
 
-function handleFieldSelectorKeydown(fieldSelector, event) {
-    //console.log(event );
-
-    if (event.keyCode >= 65 && event.charCode <= 90) {
-        event.stopImmediatePropagation();
-    }
-
-    const textInput = document.getElementById('ff_show_search_input');
-
-    if (event.key=='Backspace') {
-        textInput.value=textInput.value.substring(0,textInput.value.length-1);
-    } else {
-        textInput.value=textInput.value+event.key;
-    }
-
-    filterDropdowns(fieldSelector);
-
-    getDropdown(fieldSelector).handleKeydown(event);
-
-}
-
-function handleFieldSelectorKeypress(fieldSelector, event) {
-    //getDropdown(fieldSelector).handleKeypress(event);
-}
-
 // Add the Field Finder filter elements to the dropdown
 function addFieldFinderFilterElements(fieldSelector) {
-
-    //fieldSelector.setAttribute('onkeydown','handleFieldSelectorKeydown(this,event);');
-    //fieldSelector.setAttribute('onkeypress','handleFieldSelectorKeypress(this,event);');
 
     const dropdown = getDropdown(fieldSelector);
     const fieldFilter =  document.createElement('div');
@@ -126,8 +96,8 @@ function addFieldFinderFilterElements(fieldSelector) {
     searchTextInput.setAttribute('type','text');
     searchTextInput.setAttribute('id','ff_show_search_input');
     searchTextInput.setAttribute('onmouseup','event.stopPropagation();this.focus();');
-    searchTextInput.setAttribute('onkeydown',`handleKeyDownEvent(${fieldSelector.id},event);`);
-    searchTextInput.setAttribute('onkeypress',`event.stopImmediatePropagation();`);
+    searchTextInput.setAttribute('onkeydown','event.stopImmediatePropagation();');
+    searchTextInput.setAttribute('onkeypress','event.stopImmediatePropagation();');
     searchTextInput.setAttribute('onkeyup',`event.stopImmediatePropagation();filterDropdowns(${fieldSelector.id});`);
     searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
@@ -168,160 +138,6 @@ function addFieldFinderFilterElements(fieldSelector) {
 
     dropdown.div.insertBefore(fieldFilter,dropdown.div.childNodes[0]);
 }
-
-function handleKeyDownEvent(fieldSelectorId, event) {
-
-    event.stopImmediatePropagation();
-    //console.log(fieldSelectorId);
-
-
-    let optionSelected, firstOption;
-
-    //console.log(event.code);
-
-    if (event.code=='ArrowDown' || event.code=='ArrowUp') {
-
-        const dropdown = getDropdown(fieldSelectorId);
-
-
-        const x = dropdown.div.getElementsByClassName('dropdownSelected');
-        //console.log(x.length);
-        if (x.length>0) {
-            for (let z=0; z<x.length; z++) {
-                //console.log(x[z]);
-                x[z].setAttribute('class','dropdownNotSelected');    
-            }    
-        }
-        
-
-
-        //dropdown.gotoNext(event);
-        
-        /*
-        const x = dropdown.getElementsByClassName('dropdownSelected');
-        console.log(x.length);
-        if (x.length>0) {
-            for (let z=0; z<x.length; z++) {
-                console.log(x[z]);
-                x[z].setAttribute('class','dropdownNotSelected');    
-            }
-        }*/
-
-        for (let o=0; o<=dropdown.div.childNodes.length; o++) {
-            if (dropdown.div.childNodes[o]?.style.display != 'block' || dropdown.div.childNodes[o]?.getAttribute('ff_fieldtype') == '') {
-                continue;
-            }
-            if (!firstOption) {
-                firstOption = o;
-                console.log(`First option is ${firstOption}`);
-            }
-            if (dropdown.div.childNodes[o].getAttribute('class') == 'dropdownSelected') {
-                optionSelected = o;
-            }
-        }
-        if (!optionSelected) {
-            dropdown.div.childNodes[firstOption].setAttribute('class','dropdownSelected');
-        } else {
-            const direction = event.code=='ArrowDown' ? 1 : -1;
-            dropdown.div.childNodes[optionSelected].setAttribute('class','dropdownNotSelected');
-            dropdown.div.childNodes[optionSelected+direction].setAttribute('class','dropdownSelected');
-        }
-
-       // getDropdown(fieldSelectorId).handleKeydown(event);
-
-    }
-
-    if (event.code=='Enter') {
-        const dropdown = getDropdown(fieldSelectorId);
-
-        //const x = dropdown.div.getElementsByClassName('dropdownSelected');
-        
-        //console.log(x.length);
-
-        //console.log(x[0]);
-
-        //console.log('dispatching mouse click');
-        console.log( dropdown.div);
-        dropdown.div.click();
-        
-        //console.log('cliking!');
-
-        return;
-    }
-}
-
-function handleOptionMouseOver(option,event) {
-
-    if (event.type=='mouseenter') {
-
-        const parent = option.parentNode;
-
-        const x = parent.getElementsByClassName('dropdownSelected');
-        //console.log(x.length);
-        if (x.length>0) {
-            for (let z=0; z<x.length; z++) {
-                //console.log(x[z]);
-                x[z].setAttribute('class','dropdownNotSelected');    
-            }    
-        }
-
-        //console.log(parent);
-
-       /* for (let o=0; o<=parent.childNodes.length; o++) {
-           // console.log(parent.childNodes[o]);
-            if (parent.childNodes[o]?.style.display != 'block' || parent.childNodes[o]?.getAttribute('ff_fieldtype') == '') {
-                continue;
-            }
-            if (parent.childNodes[o]?.getAttribute('class') == 'dropdownSelected') {
-                optionSelected = o;
-                console.log(`Option selected is ${optionSelected}`);
-                parent.childNodes[o].classList.add('dropdownNotSelected');
-                parent.childNodes[o].classList.remove('dropdownSelected');
-            }
-        }*/
-
-        option.setAttribute('class','dropdownSelected');    
-      //  option.classList.remove('dropdownNotSelected');
-      //  option.classList.add('dropdownSelected');
-    }
-
-    /*
-    let optionSelected, firstOption;
-    if (event.type=='mouseenter') {
-        const dropdown = getDropdown(fieldSelectorId);
-        //dropdown.gotoNext(event);
-        
-        for (let o=0; o<=dropdown.div.childNodes.length; o++) {
-            if (dropdown.div.childNodes[o]?.style.display != 'block' || dropdown.div.childNodes[o]?.getAttribute('ff_fieldtype') == '') {
-                continue;
-            }
-            if (!firstOption) {
-                firstOption = o;
-                console.log(`First option is ${firstOption}`);
-            }
-            console.log(dropdown.div.childNodes[o]?.getAttribute('class'));
-            if (dropdown.div.childNodes[o]?.getAttribute('class') == 'dropdownSelected') {
-                optionSelected = o;
-                console.log(`Option selected is ${optionSelected}`);
-            }
-        }
-        if (!optionSelected) {
-            dropdown.div.childNodes[firstOption].classList.add('dropdownSelected');
-            dropdown.div.childNodes[firstOption].classList.remove('dropdownNotSelected');
-        } else {
-            dropdown.div.childNodes[optionSelected].classList.remove('dropdownSelected');
-            dropdown.div.childNodes[optionSelected].classList.add('dropdownNotSelected');
-            dropdown.div.childNodes[optionSelected+1].classList.add('dropdownSelected');
-        }
-    }*/
-}
-
-/*function handleKeyPressEvent(fieldSelectorId, event) {
-    if (event.code='ArrowDown') {
-        getDropdown(fieldSelectorId);
-    }
-}*/
-
 
 // Add the Field Finder footer element to the dropdown
 function addFieldFinderFooterElement(fieldSelector) {
@@ -401,13 +217,6 @@ function prepareDropdownOption(dropdown, opt, index) {
     opt.appendChild(fieldTypeElement);
     opt.appendChild(fieldDataTypeElement);
 
-    opt.setAttribute('onmouseenter',`event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();handleOptionMouseOver(this,event);return false;`);
-    opt.setAttribute('onmousemove',`event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();handleOptionMouseOver(this,event);return false;`);
-    opt.setAttribute('onmouseover',`event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();handleOptionMouseOver(this,event);return false;`);
-    opt.setAttribute('onpointerover',`event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();handleOptionMouseOver(this,event);return false;`);
-    opt.setAttribute('onpointerenter',`event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();handleOptionMouseOver(this,event);return false;`);
-    opt.setAttribute('onpointermove',`event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();handleOptionMouseOver(this,event);return false;`);
-
     return true;
 
 }
@@ -473,9 +282,9 @@ function handleFieldSelectorClick(event) {
         * NetSuite resets the dropdown if a related table field is selected
         * so we must prep the dropdown again.
         */
-        //if (dropdown.div.id == '') {
-        //    prepareDropdown(target);
-        //}
+        if (dropdown.div.id == '') {
+            prepareDropdown(target);
+        }
 
         if (dropdown?.currentCell) {
             const dropdownLocation = dropdown.div.getBoundingClientRect();
