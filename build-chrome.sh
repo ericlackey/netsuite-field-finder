@@ -6,6 +6,8 @@ mkdir -p versions/fieldfinder_0_$1/chrome/build
 cp -r css versions/fieldfinder_0_$1/chrome/build
 cp -r scripts versions/fieldfinder_0_$1/chrome/build
 cp manifest_chrome.json versions/fieldfinder_0_$1/chrome/build/manifest.json
-zip -r versions/fieldfinder_0_$1/fieldfinder_0_$1_chrome.zip versions/fieldfinder_0_$1/chrome/build/*
-rm -rf versions/fieldfinder_0_$1/chrome
+cd versions/fieldfinder_0_$1/chrome/build/
+zip -r ../../fieldfinder_0_$1_chrome.zip *
+cd ../../
+rm -rf chrome
 echo "Done"

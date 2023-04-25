@@ -7,6 +7,13 @@ A Chrome extension for NetSuite that allows users to quicky find fields in Saved
 
 ## Release Notes
 
+### 0.16
+- Create first version with both Firefox and Chrome support
+
+### 0.15
+- Add Firefox support
+- Add build scripts to easily create separate artifacts for Chrome & Firefox
+
 ### 0.14
 - Fix issue where fields had incorrect field type of Native rather than Custom if there was not an underscore in scriptID.
 
