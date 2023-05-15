@@ -5,6 +5,8 @@
 *
 */
 
+"use strict"
+
 // Define the NetSuite field dropdowns where we want to add filtering capability
 const fieldsToFilter = [
     "input[id^='inpt_filterfilter']",
@@ -19,52 +21,37 @@ const fieldsToFilter = [
 // Prepare the dropdowns for Field Filter
 document.querySelectorAll(fieldsToFilter.join(',')).forEach((fieldSelector) => {
     prepareDropdown(fieldSelector);
-    handleSelectorValueChange(fieldSelector);
+    return true;
 });
 
-// Observes value changes and resets field finder form
-function handleSelectorValueChange(fieldSelector) {
-
-    const dropdown = getDropdown(fieldSelector);
-
-    const callback = (mutationList, observer) => {
-        for (const mutation of mutationList) {
-            if (mutation.attributeName=='title') {
-                const previousTitle = dropdown.fieldFinder.currentTitle;
-                const currentTitle = mutation.target.getAttribute('title');
-                if (previousTitle && previousTitle != currentTitle) {
-                    resetFieldFinder(fieldSelector);
-                }
-                if (currentTitle) {
-                    dropdown.fieldFinder.currentTitle = currentTitle;
-                }
-            }
-        }
-    };
-
-    const observer = new MutationObserver(callback);
-    const config = { attributes: true, childList: false, subtree: false };
-    observer.observe(fieldSelector, config);
-
-}
-
 // Reset the Field Finder fields back to default when a new option is selected
-function resetFieldFinder(selector) {
-
-    const dropdown = getDropdown(selector);
+function resetFieldFinder(fieldSelector) {
+    const dropdown = getDropdown(fieldSelector);
+    if (isFieldFinderDefault(dropdown.fieldFinder)) {
+        return;
+    }
     dropdown.fieldFinder.searchInputField.value = '';
-
     dropdown.fieldFinder.buttons.forEach((button) => {
         button.classList.remove('ff_button_enabled');
     });
-
     dropdown.fieldFinder.customBodyFields = false;
     dropdown.fieldFinder.customColumnFields = false;
     dropdown.fieldFinder.customFields = false;
     dropdown.fieldFinder.relatedTableFields = false;
     dropdown.fieldFinder.nativeFields = false;
-    filterDropdowns(selector);
+    filterDropdowns(fieldSelector);
+}
 
+// Returns true if Field Finder is set to default settings
+function isFieldFinderDefault(fieldFinder) {
+    if (fieldFinder.searchInputField.value != '') {
+        return false;
+    }
+    const buttonEnabled = (button) => fieldFinder[button.id];
+    if (!fieldFinder.buttons.some(buttonEnabled)) {
+        return false
+    };
+    return true;
 }
 
 // Return a field type based on the field prefix
@@ -81,9 +68,123 @@ function getFieldType(fieldId) {
     return fieldType;
 }
 
+// Handle enter, tab, arrow up/down keys
+function handleKeyDown(event, fieldSelector) {
+    event.stopImmediatePropagation();
+
+    const dropdown = getDropdown(fieldSelector);
+    const currentCell = dropdown.indexOnDeck || 0;
+
+    if (event.key == 'Enter' || event.key == 'Tab') {
+        event.preventDefault();
+        dropdown.setAndClose(currentCell);
+        return;
+    }
+
+    // If there is already an option selected
+    if (event.key == 'ArrowDown' || event.key == 'ArrowUp') {
+        event.preventDefault();
+        if (currentCell == 0 && event.key == 'ArrowUp') {
+            return;
+        }
+        let nextCell = event.key=='ArrowDown' ? currentCell+1 : currentCell-1;
+        let nextOption = dropdown.divArray[nextCell];
+        while(nextOption) {
+            if (nextOption && nextOption.style.display == 'block') {
+                dropdown.respondToArrow(nextCell-currentCell);
+                break;
+            }
+            nextCell = event.key=='ArrowDown' ? nextCell+1 : nextCell-1;
+            nextOption = dropdown.divArray[nextCell];
+        }
+    }
+
+    scrollDown(dropdown);
+
+    // Give focus back to input field
+    event.target.focus();
+}
+
+// Handle alpha-numeric keys typed into textbox
+function handleKeyUp(event, fieldSelector) {
+    event.stopImmediatePropagation();
+    if ((event.keyCode >= 48 && event.keyCode <= 90) || event.keyCode == 8 ) {
+        filterDropdowns(fieldSelector);
+        const dropdown = getDropdown(fieldSelector);
+        // Move selected option back to 0
+        dropdown.respondToArrow(0-dropdown.indexOnDeck);
+        // Give textbox the focus back since the method above steals it
+        event.target.focus();
+    }
+}
+
+// Automatically scroll the div window to account for the filter settings element. Otherwise, selected field gets hidden behind it.
+function handleFieldSelectorClick(event) {
+    try {
+
+        const target = document.getElementById(event.target.id.replace(/\_arrow$/,''));
+        const dropdown = getDropdown(target);
+
+        if (!dropdown.getIndex()) {
+            resetFieldFinder(target);
+        }
+
+        /*
+        * NetSuite resets the dropdown if a related table field is selected
+        * so we must prep the dropdown again.
+        */
+        if (dropdown.div.id == '') {
+            prepareDropdown(target);
+        }
+
+        scrollDown(dropdown);
+
+    } catch (err) {
+        console.error(`An error occurred while: handling field selector click: ${err}`);
+    }
+
+    // Set focus to the text box if it exists.
+    setFocusOnTextBox();
+}
+
+// Handles when a user clicks on one of the field type buttons
+function handleButtonClick(button, fieldSelector) {
+    const dropdown = getDropdown(fieldSelector);
+    const previousValue = dropdown.fieldFinder[button.id];
+
+    if (previousValue) {
+        button.classList.remove('ff_button_enabled');
+    } else {
+        button.classList.add('ff_button_enabled');
+    }
+
+    dropdown.fieldFinder[button.id] = previousValue ? false : true;
+
+    // Move selected option back to 0
+    dropdown.respondToArrow(0-dropdown.indexOnDeck);
+
+    setFocusOnTextBox();
+
+    filterDropdowns(fieldSelector);
+}
+
+// Prevents first option from being hidden behind Field Finder div
+function scrollDown(dropdown) {
+    if (dropdown?.currentCell) {
+        const dropdownLocation = dropdown.div.getBoundingClientRect();
+        const selectedOptionLocation = dropdown.currentCell.getBoundingClientRect();
+        const diff = (selectedOptionLocation.top - dropdownLocation.top);
+        if (diff < 32) {
+            dropdown.div.scrollBy({
+                top: -32+diff,
+                behavior: 'instant'
+            });
+        }
+    }
+}
+
 // Add the Field Finder filter elements to the dropdown
 function addFieldFinderFilterElements(fieldSelector) {
-
     const dropdown = getDropdown(fieldSelector);
     const fieldFilter =  document.createElement('div');
     fieldFilter.classList.add('ff_div');
@@ -96,9 +197,9 @@ function addFieldFinderFilterElements(fieldSelector) {
     searchTextInput.setAttribute('type','text');
     searchTextInput.setAttribute('id','ff_show_search_input');
     searchTextInput.setAttribute('onmouseup','event.stopPropagation();this.focus();');
-    searchTextInput.setAttribute('onkeydown','event.stopImmediatePropagation();');
+    searchTextInput.setAttribute('onkeyup',`handleKeyUp(event,${fieldSelector.id});`);
+    searchTextInput.setAttribute('onkeydown',`handleKeyDown(event,${fieldSelector.id});`);
     searchTextInput.setAttribute('onkeypress','event.stopImmediatePropagation();');
-    searchTextInput.setAttribute('onkeyup',`event.stopImmediatePropagation();filterDropdowns(${fieldSelector.id});`);
     searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
 
@@ -146,19 +247,20 @@ function addFieldFinderFooterElement(fieldSelector) {
     footerDiv.setAttribute('id','footerDiv');
     footerDiv.classList.add('ff_div_footer');
 
-    filterStatusElement = document.createElement('span');
+    const filterStatusElement = document.createElement('span');
     filterStatusElement.setAttribute('id','ffFilterStatus');
     filterStatusElement.classList.add('ff_status');
     footerDiv.appendChild(filterStatusElement);
 
-    titleElement = document.createElement('span');
+    const titleElement = document.createElement('span');
     titleElement.setAttribute('id','ffTitle');
     titleElement.classList.add('ff_title');
     titleElement.textContent = 'Filtered by ';
-    anchorElement = document.createElement('a');
+    
+    const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='Filtered by NetSuite Field Finder 0.16';
-    anchorElement.textContent='NetSuite Field Finder 0.16';
+    anchorElement.title='Filtered by NetSuite Field Finder 0.17';
+    anchorElement.textContent='NetSuite Field Finder 0.17';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -169,13 +271,8 @@ function addFieldFinderFooterElement(fieldSelector) {
     dropdown.fieldFinder.footer = dropdown.div.appendChild(footerDiv);
 }
 
-/* Prepare Dropdown option */
+// Prepare Dropdown option
 function prepareDropdownOption(dropdown, opt, index) {
-
-    if (index==0) {
-        opt.style.cssText = 'display:none;';
-    }
-
     const fieldId = dropdown.valueArray[index];
     const fieldName = dropdown.textArray[index];
 
@@ -190,6 +287,7 @@ function prepareDropdownOption(dropdown, opt, index) {
     opt.setAttribute('ff_fieldtype',fieldType);
     opt.setAttribute('ff_fieldname',newFieldName);
     opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
+    opt.setAttribute('style','display:block');
     opt.textContent='';
 
     const fieldNameElement = document.createElement('span');
@@ -218,13 +316,10 @@ function prepareDropdownOption(dropdown, opt, index) {
     opt.appendChild(fieldDataTypeElement);
 
     return true;
-
 }
 
 // Prepare the dropdown for use with Field Filter
 function prepareDropdown(fieldSelector) {
-
-    // Use NetSuite native functions to get access to the dropdown
     const dropdown = getDropdown(fieldSelector);
 
     if (!dropdown.div) {
@@ -240,8 +335,10 @@ function prepareDropdown(fieldSelector) {
     // Set ID of dropdown div so we can access it later
     fieldSelector.setAttribute('dropdown',dropdown.div.id);
 
-    // Add event listeners to handle when user clicks on field selector
+    // Add event listener to handle when user clicks on field selector
     fieldSelector.addEventListener('click',handleFieldSelectorClick);
+
+    // Add event listener to handle when user clicks on field selector arrow
     document.getElementById(`${fieldSelector.id}_arrow`)?.addEventListener('click',handleFieldSelectorClick);
 
     // Prepare each option in the dropdown list
@@ -252,9 +349,6 @@ function prepareDropdown(fieldSelector) {
 
     // Add the Field Finder footer element to the dropdown
     addFieldFinderFooterElement(fieldSelector);
-
-    return true;
-
 }
 
 // Add a field type button filter
@@ -264,67 +358,15 @@ function createFilterButton(fieldSelector, fieldId, title) {
     buttonElement.setAttribute('onpointerdown','event.preventDefault();');
     buttonElement.setAttribute('id',fieldId);
     buttonElement.setAttribute('type','button');
-    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this, ${fieldSelector.id});`);
+    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this,${fieldSelector.id});`);
     buttonElement.setAttribute('value',0);
     buttonElement.innerText=title;
     return buttonElement;
 }
 
-// Automatically scroll the div window to account for the filter settings element. Otherwise, selected field gets hidden behind it.
-function handleFieldSelectorClick(event) {
-
-    try {
-
-        const target = document.getElementById(event.target.id.replace(/\_arrow$/,''));
-        const dropdown = getDropdown(target);
-
-        /*
-        * NetSuite resets the dropdown if a related table field is selected
-        * so we must prep the dropdown again.
-        */
-        if (dropdown.div.id == '') {
-            prepareDropdown(target);
-        }
-
-        if (dropdown?.currentCell) {
-            const dropdownLocation = dropdown.div.getBoundingClientRect();
-            const selectedOptionLocation = dropdown.currentCell.getBoundingClientRect();
-            if (dropdownLocation?.x == selectedOptionLocation?.x) {
-                dropdown.div.scrollBy({
-                    top: -32,
-                    behavior: 'instant'
-                });
-            }
-        }
-    } catch (err) {
-        console.error(`An error occurred while: handling field selector click: ${err}`);
-    }
-
-    // Set focus to the text box if it exists.
-    setTimeout(setFocusOnTextBox,100);
-
-}
-
 // Automatically set focus on text box so that user can immediately start typing a search string
 function setFocusOnTextBox() {
     document.getElementById('ff_show_search_input')?.focus();
-}
-
-// Handles when a user clicks on the span containing the checkbox instead of the actual checkbox
-function handleButtonClick(button, fieldSelector) {
-    const dropdown = getDropdown(fieldSelector);
-    const previousValue = dropdown.fieldFinder[button.id];
-
-    if (previousValue) {
-        button.classList.remove('ff_button_enabled');
-    } else {
-        button.classList.add('ff_button_enabled');
-    }
-
-    dropdown.fieldFinder[button.id] = previousValue ? false : true;
-
-    filterDropdowns(fieldSelector);
-    return;
 }
 
 // Show or hide options based on current Field Filter selections

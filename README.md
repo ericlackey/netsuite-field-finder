@@ -7,6 +7,10 @@ A Chrome extension for NetSuite that allows users to quicky find fields in Saved
 
 ## Release Notes
 
+### 0.17
+- Allow the use of arrow up/down keys to select the next field in the dropdown list
+- Allow the use of enter/tab key to select the selected field in the dropdown list
+
 ### 0.16
 - Create first version with both Firefox and Chrome support
 
