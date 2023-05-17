@@ -44,11 +44,11 @@ function resetFieldFinder(fieldSelector) {
 
 // Returns true if Field Finder is set to default settings
 function isFieldFinderDefault(fieldFinder) {
-    if (fieldFinder.searchInputField.value != '') {
+    if (fieldFinder.searchInputField.value.length > 0) {
         return false;
     }
     const buttonEnabled = (button) => fieldFinder[button.id];
-    if (!fieldFinder.buttons.some(buttonEnabled)) {
+    if (fieldFinder.buttons.some(buttonEnabled)) {
         return false
     };
     return true;
@@ -68,21 +68,26 @@ function getFieldType(fieldId) {
     return fieldType;
 }
 
-// Handle enter, tab, arrow up/down keys
-function handleKeyDown(event, fieldSelector) {
+// Handle keys typed into the search text box
+function handleKey(event, fieldSelector) {
+
     event.stopImmediatePropagation();
+
+    if (event.type == 'keypress') {
+        return;
+    }
 
     const dropdown = getDropdown(fieldSelector);
     const currentCell = dropdown.indexOnDeck || 0;
 
-    if (event.key == 'Enter' || event.key == 'Tab') {
+    // Handle enter & tab key
+    if (event.type == 'keyup' && event.key == 'Enter' || event.key == 'Tab') {
         event.preventDefault();
         dropdown.setAndClose(currentCell);
         return;
     }
-
-    // If there is already an option selected
-    if (event.key == 'ArrowDown' || event.key == 'ArrowUp') {
+    // Handle arrow keys
+    else if (event.type == 'keydown' && (event.key == 'ArrowDown' || event.key == 'ArrowUp')) {
         event.preventDefault();
         if (currentCell == 0 && event.key == 'ArrowUp') {
             return;
@@ -90,7 +95,7 @@ function handleKeyDown(event, fieldSelector) {
         let nextCell = event.key=='ArrowDown' ? currentCell+1 : currentCell-1;
         let nextOption = dropdown.divArray[nextCell];
         while(nextOption) {
-            if (nextOption && nextOption.style.display == 'block') {
+            if (nextOption && nextOption.style.getPropertyValue('display') == 'block') {
                 dropdown.respondToArrow(nextCell-currentCell);
                 break;
             }
@@ -98,36 +103,27 @@ function handleKeyDown(event, fieldSelector) {
             nextOption = dropdown.divArray[nextCell];
         }
     }
-
-    scrollDown(dropdown);
+    // Handle alpha-numeric keys
+    else if (event.type == 'keyup' && (event.keyCode >= 48 && event.keyCode <= 90) || event.keyCode == 8 ) {
+        filterDropdowns(fieldSelector);
+        // Move selected option back to 0
+        dropdown.respondToArrow(0-dropdown.indexOnDeck);
+    }
 
     // Give focus back to input field
     event.target.focus();
+
 }
 
-// Handle alpha-numeric keys typed into textbox
-function handleKeyUp(event, fieldSelector) {
-    event.stopImmediatePropagation();
-    if ((event.keyCode >= 48 && event.keyCode <= 90) || event.keyCode == 8 ) {
-        filterDropdowns(fieldSelector);
-        const dropdown = getDropdown(fieldSelector);
-        // Move selected option back to 0
-        dropdown.respondToArrow(0-dropdown.indexOnDeck);
-        // Give textbox the focus back since the method above steals it
-        event.target.focus();
-    }
-}
-
-// Automatically scroll the div window to account for the filter settings element. Otherwise, selected field gets hidden behind it.
+// Handle when user clicks on field selector
 function handleFieldSelectorClick(event) {
     try {
 
+        // Get the target of the click and account for user clicking on arrow instead of field
         const target = document.getElementById(event.target.id.replace(/\_arrow$/,''));
-        const dropdown = getDropdown(target);
 
-        if (!dropdown.getIndex()) {
-            resetFieldFinder(target);
-        }
+        // Get the associated dropdown of the field selector
+        const dropdown = getDropdown(target);
 
         /*
         * NetSuite resets the dropdown if a related table field is selected
@@ -137,14 +133,17 @@ function handleFieldSelectorClick(event) {
             prepareDropdown(target);
         }
 
-        scrollDown(dropdown);
+        // If there is no field selected, clear the field finder settings
+        if (!dropdown.getIndex()) {
+            resetFieldFinder(target);
+        }
+
+        // Set focus to the text box if it exists.
+        setFocusOnTextBox();
 
     } catch (err) {
         console.error(`An error occurred while: handling field selector click: ${err}`);
     }
-
-    // Set focus to the text box if it exists.
-    setFocusOnTextBox();
 }
 
 // Handles when a user clicks on one of the field type buttons
@@ -168,21 +167,6 @@ function handleButtonClick(button, fieldSelector) {
     filterDropdowns(fieldSelector);
 }
 
-// Prevents first option from being hidden behind Field Finder div
-function scrollDown(dropdown) {
-    if (dropdown?.currentCell) {
-        const dropdownLocation = dropdown.div.getBoundingClientRect();
-        const selectedOptionLocation = dropdown.currentCell.getBoundingClientRect();
-        const diff = (selectedOptionLocation.top - dropdownLocation.top);
-        if (diff < 32) {
-            dropdown.div.scrollBy({
-                top: -32+diff,
-                behavior: 'instant'
-            });
-        }
-    }
-}
-
 // Add the Field Finder filter elements to the dropdown
 function addFieldFinderFilterElements(fieldSelector) {
     const dropdown = getDropdown(fieldSelector);
@@ -197,9 +181,9 @@ function addFieldFinderFilterElements(fieldSelector) {
     searchTextInput.setAttribute('type','text');
     searchTextInput.setAttribute('id','ff_show_search_input');
     searchTextInput.setAttribute('onmouseup','event.stopPropagation();this.focus();');
-    searchTextInput.setAttribute('onkeyup',`handleKeyUp(event,${fieldSelector.id});`);
-    searchTextInput.setAttribute('onkeydown',`handleKeyDown(event,${fieldSelector.id});`);
-    searchTextInput.setAttribute('onkeypress','event.stopImmediatePropagation();');
+    searchTextInput.setAttribute('onkeyup',`handleKey(event,${fieldSelector.id});`);
+    searchTextInput.setAttribute('onkeydown',`handleKey(event,${fieldSelector.id});`);
+    searchTextInput.setAttribute('onkeypress',`handleKey(event,${fieldSelector.id});`);
     searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
 
@@ -255,11 +239,11 @@ function addFieldFinderFooterElement(fieldSelector) {
     const titleElement = document.createElement('span');
     titleElement.setAttribute('id','ffTitle');
     titleElement.classList.add('ff_title');
-    titleElement.textContent = 'Filtered by ';
+    titleElement.textContent = '';
     
     const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='Filtered by NetSuite Field Finder 0.17';
+    anchorElement.title='NetSuite Field Finder 0.17';
     anchorElement.textContent='NetSuite Field Finder 0.17';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
@@ -287,27 +271,27 @@ function prepareDropdownOption(dropdown, opt, index) {
     opt.setAttribute('ff_fieldtype',fieldType);
     opt.setAttribute('ff_fieldname',newFieldName);
     opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
-    opt.setAttribute('style','display:block');
+    opt.style.setProperty('display','block');
     opt.textContent='';
 
     const fieldNameElement = document.createElement('span');
     fieldNameElement.classList.add('ff_option');
-    fieldNameElement.style.cssText = 'width:35%;';
+    fieldNameElement.style.setProperty('width','35%');
     fieldNameElement.textContent=newFieldName;
 
     const fieldIdElement = document.createElement('span');
     fieldIdElement.classList.add('ff_option');
-    fieldIdElement.style.cssText = 'width:35%;';
+    fieldIdElement.style.setProperty('width','35%');
     fieldIdElement.textContent = fieldType == 'Related Fields' ? '' : opt.getAttribute('ff_fieldid');
 
     const fieldTypeElement = document.createElement('span');
     fieldTypeElement.classList.add('ff_option');
-    fieldTypeElement.style.cssText = 'width:15%;';
+    fieldTypeElement.style.setProperty('width','15%');
     fieldTypeElement.textContent=fieldType;
 
     const fieldDataTypeElement = document.createElement('span');
     fieldDataTypeElement.classList.add('ff_option');
-    fieldDataTypeElement.style.cssText = 'width:15%;';
+    fieldDataTypeElement.style.setProperty('width','15%');
     fieldDataTypeElement.textContent = fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[fieldId] : '';
 
     opt.appendChild(fieldNameElement);
@@ -327,7 +311,9 @@ function prepareDropdown(fieldSelector) {
     }
 
     // Increase width of the options element
-    dropdown.div.style.width='800px';
+    dropdown.div.style.setProperty('width','800px');
+    dropdown.div.style.setProperty('margin-bottom','25px');
+    dropdown.div.style.setProperty('margin-top','32px');
 
     // Set the ID of the options element so we can access it later
     dropdown.div.id = `${fieldSelector.id}_dropdown`;
@@ -371,6 +357,8 @@ function setFocusOnTextBox() {
 
 // Show or hide options based on current Field Filter selections
 function filterDropdowns (fieldSelector) {
+    console.log('we are filtering');
+
 
     const dropdown = getDropdown(fieldSelector);
     const dropdownDiv = dropdown.div;
@@ -403,19 +391,19 @@ function filterDropdowns (fieldSelector) {
         // Filter by field type
         switch(opt.getAttribute('ff_fieldtype')) {
             case 'Related Fields':
-                opt.style.display = showRelatedTableFields || !filterByFieldType ? 'block' : 'none';
+                opt.style.setProperty('display',showRelatedTableFields || !filterByFieldType ? 'block' : 'none');
                 break;
             case 'Custom Body':
-                opt.style.display = showCustomBodyFields || !filterByFieldType ? 'block' : 'none';
+                opt.style.setProperty('display',showCustomBodyFields || !filterByFieldType ? 'block' : 'none');
                 break;
             case 'Custom Column':
-                opt.style.display = showCustomColumnFields || !filterByFieldType ? 'block' : 'none';
+                opt.style.setProperty('display',showCustomColumnFields || !filterByFieldType ? 'block' : 'none');
                 break;
             case 'Custom Field':
-                opt.style.display = showCustomFields || !filterByFieldType ? 'block' : 'none';
+                opt.style.setProperty('display',showCustomFields || !filterByFieldType ? 'block' : 'none');
                 break;
             case 'Native Field':
-                opt.style.display = showNativeFields || !filterByFieldType ? 'block' : 'none';
+                opt.style.setProperty('display',showNativeFields || !filterByFieldType ? 'block' : 'none');
                 break;
         };
 
@@ -427,13 +415,13 @@ function filterDropdowns (fieldSelector) {
 
         const searchRegex = new RegExp(searchText, 'gi');
 
-        if (opt.style.display == 'block'
+        if (opt.style.getPropertyValue('display') == 'block'
             && opt.getAttribute('ff_fieldname').search(searchRegex)==-1
             && opt.getAttribute('ff_fieldid').search(searchRegex)==-1) {
-            opt.style.display = 'none';
+            opt.style.setProperty('display','none');
         }
 
-        if (opt.style.display != 'none' && opt.getAttribute('ff_fieldname')) {
+        if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
                 opt.children[0].innerHTML = newFieldNameHTML;
@@ -450,7 +438,7 @@ function filterDropdowns (fieldSelector) {
         }
 
         if (opt.getAttribute('id') != 'footerDiv') {
-            if (opt.style.display == 'block') {
+            if (opt.style.getPropertyValue('display') == 'block') {
                 fieldsDisplayed++;
             }
             fieldsTotal++;
@@ -462,13 +450,6 @@ function filterDropdowns (fieldSelector) {
     // Display footer text with number of fields being shown
     const footerDiv = dropdown.fieldFinder.footer;
     const ffFilterStatus = footerDiv.childNodes[0];
-    if (fieldsTotal > fieldsDisplayed) {
-        ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
-        footerDiv.style.visibility = 'visible';
-    } else {
-        footerDiv.style.visibility = 'hidden';
-    }
-
-    return true;
+    ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
 
 }
