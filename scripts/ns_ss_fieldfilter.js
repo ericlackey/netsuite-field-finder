@@ -357,9 +357,6 @@ function setFocusOnTextBox() {
 
 // Show or hide options based on current Field Filter selections
 function filterDropdowns (fieldSelector) {
-    console.log('we are filtering');
-
-
     const dropdown = getDropdown(fieldSelector);
     const dropdownDiv = dropdown.div;
 
@@ -451,5 +448,4 @@ function filterDropdowns (fieldSelector) {
     const footerDiv = dropdown.fieldFinder.footer;
     const ffFilterStatus = footerDiv.childNodes[0];
     ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
-
 }
