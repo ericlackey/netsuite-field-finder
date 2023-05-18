@@ -3,7 +3,7 @@ NetSuite Field Finder
 
 ## Summary
 
-A Chrome extension for NetSuite that allows users to quicky find fields in Saved Searches and Workflows by filtering the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
+A Chrome & Firefox browser extension for NetSuite that allows users to quicky find fields in Saved Searches and Workflows by filtering the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
 
 ## Release Notes
 
