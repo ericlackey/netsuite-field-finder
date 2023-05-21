@@ -7,6 +7,9 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.18
+- Rename Native Fields to Standard Fields to align with NetSuite terminology
+
 ### 0.17
 - Allow the use of arrow up/down keys to select the next field in the dropdown list
 - Allow the use of enter/tab key to select the selected field in the dropdown list

@@ -38,7 +38,7 @@ function resetFieldFinder(fieldSelector) {
     dropdown.fieldFinder.customColumnFields = false;
     dropdown.fieldFinder.customFields = false;
     dropdown.fieldFinder.relatedTableFields = false;
-    dropdown.fieldFinder.nativeFields = false;
+    dropdown.fieldFinder.standardFields = false;
     filterDropdowns(fieldSelector);
 }
 
@@ -57,7 +57,7 @@ function isFieldFinderDefault(fieldFinder) {
 // Return a field type based on the field prefix
 function getFieldType(fieldId) {
     fieldId = fieldId.toLowerCase();
-    let fieldType = 'Native Field';
+    let fieldType = 'Standard Field';
     if (fieldId.match(/^(custbody)/)) {
         fieldType = 'Custom Body';
     } else if (fieldId.match(/^(custcol)/)) {
@@ -191,7 +191,7 @@ function addFieldFinderFilterElements(fieldSelector) {
     dropdown.fieldFinder.searchInputField = fieldFilter.appendChild(searchTextInput);
 
     dropdown.fieldFinder.buttons = [];
-    dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'nativeFields', 'Native Fields')));
+    dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'standardFields', 'Standard Fields')));
 
     // Determine what type of fields we have available so we only show filters for those types
     const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
@@ -215,7 +215,7 @@ function addFieldFinderFilterElements(fieldSelector) {
         dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'relatedTableFields', 'Related Table Fields')));
     }
 
-    dropdown.fieldFinder.nativeFields = false;
+    dropdown.fieldFinder.standardFields = false;
     dropdown.fieldFinder.customBodyFields = false;
     dropdown.fieldFinder.customColumnFields = false;
     dropdown.fieldFinder.customFields = false;
@@ -243,8 +243,8 @@ function addFieldFinderFooterElement(fieldSelector) {
     
     const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='NetSuite Field Finder 0.17';
-    anchorElement.textContent='NetSuite Field Finder 0.17';
+    anchorElement.title='NetSuite Field Finder 0.18';
+    anchorElement.textContent='NetSuite Field Finder 0.18';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -364,7 +364,7 @@ function filterDropdowns (fieldSelector) {
     const showCustomColumnFields = dropdown.fieldFinder.customColumnFields;
     const showCustomFields = dropdown.fieldFinder.customFields;
     const showRelatedTableFields = dropdown.fieldFinder.relatedTableFields;
-    const showNativeFields = dropdown.fieldFinder.nativeFields;
+    const showStandardFields = dropdown.fieldFinder.standardFields;
     const searchInputField = dropdown.fieldFinder.searchInputField;
 
     let fieldsDisplayed = 0;
@@ -375,7 +375,7 @@ function filterDropdowns (fieldSelector) {
         showCustomColumnFields ||
         showCustomFields ||
         showRelatedTableFields ||
-        showNativeFields) {
+        showStandardFields) {
         filterByFieldType = true;
     }
 
@@ -399,8 +399,8 @@ function filterDropdowns (fieldSelector) {
             case 'Custom Field':
                 opt.style.setProperty('display',showCustomFields || !filterByFieldType ? 'block' : 'none');
                 break;
-            case 'Native Field':
-                opt.style.setProperty('display',showNativeFields || !filterByFieldType ? 'block' : 'none');
+            case 'Standard Field':
+                opt.style.setProperty('display',showStandardFields || !filterByFieldType ? 'block' : 'none');
                 break;
         };
 
