@@ -3,9 +3,24 @@ NetSuite Field Finder
 
 ## Summary
 
-A Chrome extension for NetSuite that allows users to quicky find fields in Saved Searches and Workflows by filtering the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
+A Chrome & Firefox browser extension for NetSuite that allows users to quicky find fields in Saved Searches and Workflows by filtering the list of fields to specific types or search for a field name or field ID. It also improves the field dropdown listing to provide more details about the field.
 
 ## Release Notes
+
+### 0.18
+- Rename Native Fields to Standard Fields to align with NetSuite terminology
+
+### 0.17
+- Allow the use of arrow up/down keys to select the next field in the dropdown list
+- Allow the use of enter/tab key to select the selected field in the dropdown list
+- Prevent the footer from hiding the last option when scrolling field list with mouse
+
+### 0.16
+- Create first version with both Firefox and Chrome support
+
+### 0.15
+- Add Firefox support
+- Add build scripts to easily create separate artifacts for Chrome & Firefox
 
 ### 0.14
 - Fix issue where fields had incorrect field type of Native rather than Custom if there was not an underscore in scriptID.

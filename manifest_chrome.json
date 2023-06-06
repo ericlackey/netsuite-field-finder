@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "NetSuite Field Finder",
+    "version": "0.18",
+    "description": "Allows user to quickly find fields in Saved Search and Workflows. Also provides additional details about fields in dropdown.",
+    "content_scripts": [
+        {
+          "css": ["css/ns_ss_fieldfilter.css"],
+          "js": ["scripts/content.js"],
+          "matches": [
+            "https://*.app.netsuite.com/app/common/search/*",
+            "https://*.app.netsuite.com/app/common/workflow/setup/*"
+          ],
+          "all_frames": true
+        }
+    ],
+    "web_accessible_resources": [{
+        "resources": ["scripts/ns_ss_fieldfilter.js"],
+        "matches": ["<all_urls>"]
+    }]
+  }
