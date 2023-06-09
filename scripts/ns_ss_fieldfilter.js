@@ -32,7 +32,7 @@ function resetFieldFinder(fieldSelector) {
     }
     dropdown.fieldFinder.searchInputField.value = '';
     dropdown.fieldFinder.buttons.forEach((button) => {
-        button.classList.remove('ff_button_enabled');
+        button.classList.remove('ff_btn_enabled');
     });
     dropdown.fieldFinder.customBodyFields = false;
     dropdown.fieldFinder.customColumnFields = false;
