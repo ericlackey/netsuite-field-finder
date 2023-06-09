@@ -152,9 +152,9 @@ function handleButtonClick(button, fieldSelector) {
     const previousValue = dropdown.fieldFinder[button.id];
 
     if (previousValue) {
-        button.classList.remove('ff_button_enabled');
+        button.classList.remove('ff_btn_enabled');
     } else {
-        button.classList.add('ff_button_enabled');
+        button.classList.add('ff_btn_enabled');
     }
 
     dropdown.fieldFinder[button.id] = previousValue ? false : true;
@@ -190,8 +190,13 @@ function addFieldFinderFilterElements(fieldSelector) {
     dropdown.fieldFinder = {};
     dropdown.fieldFinder.searchInputField = fieldFilter.appendChild(searchTextInput);
 
+    const buttonGroup = document.createElement('div');
+    buttonGroup.setAttribute('class','ff_btn_group');
+    buttonGroup.setAttribute('id','ff_btn_group');
+    buttonGroup.style.setProperty('padding-left','20px');
+
     dropdown.fieldFinder.buttons = [];
-    dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'standardFields', 'Standard Fields')));
+    dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'standardFields', 'Standard')));
 
     // Determine what type of fields we have available so we only show filters for those types
     const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
@@ -200,20 +205,22 @@ function addFieldFinderFilterElements(fieldSelector) {
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
 
     if (customBodyFields) {
-        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'customBodyFields', 'Custom Body Fields')));
+        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customBodyFields', 'Custom Body')));
     }
 
     if (customColumnFields) {
-        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'customColumnFields', 'Custom Column Fields')));
+        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customColumnFields', 'Custom Column')));
     }
 
     if (customFields) {
-        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'customFields', 'Custom Fields')));
+        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customFields', 'Custom')));
     }
 
     if (relatedTableFields) {
-        dropdown.fieldFinder.buttons.push(fieldFilter.appendChild(createFilterButton(fieldSelector, 'relatedTableFields', 'Related Table Fields')));
+        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'relatedTableFields', 'Related')));
     }
+
+    fieldFilter.appendChild(buttonGroup);
 
     dropdown.fieldFinder.standardFields = false;
     dropdown.fieldFinder.customBodyFields = false;
@@ -243,8 +250,8 @@ function addFieldFinderFooterElement(fieldSelector) {
     
     const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='NetSuite Field Finder 0.18';
-    anchorElement.textContent='NetSuite Field Finder 0.18';
+    anchorElement.title='NetSuite Field Finder 0.19';
+    anchorElement.textContent='NetSuite Field Finder 0.19';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -340,7 +347,6 @@ function prepareDropdown(fieldSelector) {
 // Add a field type button filter
 function createFilterButton(fieldSelector, fieldId, title) {
     const buttonElement = document.createElement('button');
-    buttonElement.classList.add('ff_button');
     buttonElement.setAttribute('onpointerdown','event.preventDefault();');
     buttonElement.setAttribute('id',fieldId);
     buttonElement.setAttribute('type','button');

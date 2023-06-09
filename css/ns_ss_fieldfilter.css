@@ -6,6 +6,9 @@
 .ff_option {
     display: inline-block;
     font-size:12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .ff_div {
@@ -17,30 +20,6 @@
     width: 100%;
     height: 32px;
     padding-right: 10px;
-}
-
-.ff_button {
-    width: 18%;
-    display: block;
-    text-align: center;
-    border-color: gray;
-    border-style: solid;
-    margin-left: 5px;
-    margin-right: 5px;
-    border-width: 1px;
-    white-space: normal;
-    align-items: center;
-    font-size: 11px;
-    background-color: #FFFFFF;
-}
-
-.ff_button:hover {
-    border-width: 2px;
-}
-
-
-.ff_button_enabled {
-    background-color: #DFF1DF;
 }
 
 .ff_div_footer {
@@ -62,4 +41,29 @@
 .ff_title {
     width: 50%;
     text-align: right;
+}
+
+.ff_btn_group button {
+  border: 1px solid gray; /* Black border */
+  color: black; /* Black text */
+  padding: 2px 4px; /* Some padding */
+  cursor: pointer; /* Pointer/hand icon */
+  float: left; /* Float the buttons side by side */
+  width: 100px;
+  font-size: 12px;
+}
+
+.ff_btn_group button:not(:last-child) {
+  border-right: none; /* Prevent double borders */
+}
+
+/* Clear floats (clearfix hack) */
+.ff_btn_group:after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.ff_btn_enabled {
+  background-color: #DFF1DF;
 }

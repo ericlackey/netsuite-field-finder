@@ -7,6 +7,11 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.19
+- Added field filter buttons into button group
+- Shortended button field names
+- Added CSS to handle option text overflow so long field names do not overlap with field IDs
+
 ### 0.18
 - Rename Native Fields to Standard Fields to align with NetSuite terminology
 
