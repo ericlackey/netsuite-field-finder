@@ -32,10 +32,12 @@
     padding-right: 10px;
     visibility: visible;
     width: 100%;
+    text-wrap: wrap;
 }
 
 .ff_status {
     width: 50%;
+    text-wrap: wrap;
 }
 
 .ff_title {
@@ -66,4 +68,15 @@
 
 .ff_btn_enabled {
   background-color: #DFF1DF;
+}
+
+.ff_field_info_box {
+  width: 250px;
+  height: 200px;
+  position: absolute;
+  right: 0px;
+  text-wrap: wrap;
+  overflow:scroll;
+  background-color:#E5E5E5;
+  padding: 5px;
 }

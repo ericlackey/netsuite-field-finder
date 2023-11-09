@@ -195,6 +195,12 @@ function addFieldFinderFilterElements(fieldSelector) {
     buttonGroup.setAttribute('id','ff_btn_group');
     buttonGroup.style.setProperty('padding-left','20px');
 
+    const fieldInfoDiv = document.createElement('div');
+    fieldInfoDiv.textContent = "hello";
+    fieldInfoDiv.classList.add('ff_field_info_box');
+    fieldInfoDiv.setAttribute('id','ff_field_info_box');
+    dropdown.div.insertBefore(fieldInfoDiv,dropdown.div.childNodes[0]);
+
     dropdown.fieldFinder.buttons = [];
     dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'standardFields', 'Standard')));
 
@@ -262,6 +268,37 @@ function addFieldFinderFooterElement(fieldSelector) {
     dropdown.fieldFinder.footer = dropdown.div.appendChild(footerDiv);
 }
 
+
+async function getRecordData() {
+    
+}
+
+
+function displayFieldHelp(field) {
+    const searchType = document.getElementById('searchtype').value.toLowerCase();
+    document.getElementById('ff_field_info_box').innerHTML = "";
+    fetch(`/core/help/fieldhelp.nl?flhtp=USR&f=${field}&p=${searchType}`,{
+        headers: {
+            "Accept": "application/json; q=1.0, text/*; q=0.8, */*; q=0.1"
+        }
+    })
+    .then(response => {
+        response.json().then(jsonResponse => {
+            const fieldHelpText = jsonResponse.text;
+            const fieldType = getFieldType(field);
+            const fieldDataType =  rfTypes[field];
+            const theContent = `
+            <b>${fieldType} - ${fieldDataType}</b>
+            <br/><br/>
+            ${fieldHelpText}
+            `
+            document.getElementById('ff_field_info_box').innerHTML = theContent;
+//            console.log(jsonResponse);
+        });
+    });
+
+}
+
 // Prepare Dropdown option
 function prepareDropdownOption(dropdown, opt, index) {
     const fieldId = dropdown.valueArray[index];
@@ -273,11 +310,20 @@ function prepareDropdownOption(dropdown, opt, index) {
         fieldType = 'Related Fields'
     }
 
+    console.log(`Orig: ${fieldId}`);
+
     const newFieldName = fieldName.replace(/\((Custom Body|Custom Column|Custom)\)/i,'');
+    let newFieldId = fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,"");
+    
+    /*const searchType = document.getElementById('searchtype').value.toLowerCase();
+    if (searchType != "custom") {
+        newFieldId = newFieldId.replace(new RegExp(`^${searchType}_`),"");
+    }*/
 
     opt.setAttribute('ff_fieldtype',fieldType);
     opt.setAttribute('ff_fieldname',newFieldName);
-    opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
+    opt.setAttribute('ff_fieldid',newFieldId);
+    
     opt.style.setProperty('display','block');
     opt.textContent='';
 
@@ -285,26 +331,34 @@ function prepareDropdownOption(dropdown, opt, index) {
     fieldNameElement.classList.add('ff_option');
     fieldNameElement.style.setProperty('width','35%');
     fieldNameElement.textContent=newFieldName;
+    fieldNameElement.setAttribute("onMouseOver",`displayFieldHelp('${newFieldId}');`)
 
     const fieldIdElement = document.createElement('span');
     fieldIdElement.classList.add('ff_option');
     fieldIdElement.style.setProperty('width','35%');
+    console.log(`New: ${newFieldId}`);
+
     fieldIdElement.textContent = fieldType == 'Related Fields' ? '' : opt.getAttribute('ff_fieldid');
 
     const fieldTypeElement = document.createElement('span');
     fieldTypeElement.classList.add('ff_option');
     fieldTypeElement.style.setProperty('width','15%');
     fieldTypeElement.textContent=fieldType;
+    //fieldTypeElement.innerHTML = '<svg class="uif552 uif555 uif558 uif561" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="/assets/@uif-js/core/4.0.0-feature-uicr-8075-hotfix.93/resources/img/RefreshedIcon.svg#DATE" role="img" aria-label="Date" data-border-radius="square" id="uif2106" data-widget="Image" data-status="none" style="width: 24px; height: 24px;"><path d="M13 16h1v-1h-1v-5h-3v1h1v4h-1v1h3z"></path><path d="M16 5v2h-1V5H9v2H8V5H5v14h14V5zm1.5 12.5h-11v-9h11z"></path></svg>';
 
     const fieldDataTypeElement = document.createElement('span');
     fieldDataTypeElement.classList.add('ff_option');
     fieldDataTypeElement.style.setProperty('width','15%');
     fieldDataTypeElement.textContent = fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[fieldId] : '';
 
+    //fieldDataTypeElement.innerHTML = '<svg class="uif552 uif555 uif558 uif561" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="/assets/@uif-js/core/4.0.0-feature-uicr-8075-hotfix.93/resources/img/RefreshedIcon.svg#DATE" role="img" aria-label="Date" data-border-radius="square" id="uif2106" data-widget="Image" data-status="none" style="width: 24px; height: 24px;"><path d="M13 16h1v-1h-1v-5h-3v1h1v4h-1v1h3z"></path><path d="M16 5v2h-1V5H9v2H8V5H5v14h14V5zm1.5 12.5h-11v-9h11z"></path></svg>';
+
+
+
     opt.appendChild(fieldNameElement);
     opt.appendChild(fieldIdElement);
-    opt.appendChild(fieldTypeElement);
-    opt.appendChild(fieldDataTypeElement);
+    //opt.appendChild(fieldTypeElement);
+    //opt.appendChild(fieldDataTypeElement);
 
     return true;
 }
@@ -324,6 +378,8 @@ function prepareDropdown(fieldSelector) {
 
     // Set the ID of the options element so we can access it later
     dropdown.div.id = `${fieldSelector.id}_dropdown`;
+
+    console.log(dropdown);
 
     // Set ID of dropdown div so we can access it later
     fieldSelector.setAttribute('dropdown',dropdown.div.id);
