@@ -18,6 +18,8 @@ const fieldsToFilter = [
     "input[id^='inpt_filterfield']"
 ];
 
+var recordFieldData;
+
 // Prepare the dropdowns for Field Filter
 document.querySelectorAll(fieldsToFilter.join(',')).forEach((fieldSelector) => {
     prepareDropdown(fieldSelector);
@@ -41,6 +43,112 @@ function resetFieldFinder(fieldSelector) {
     dropdown.fieldFinder.standardFields = false;
     filterDropdowns(fieldSelector);
 }
+
+function getRecordData() {
+
+    console.log('loading record field data');
+
+    const searchType = document.getElementById('searchtype').value;
+    const rectype = document.getElementById('rectype').value;
+
+    if (searchType == 'Custom') {
+        require(['N/query'], function(query) {
+            const qry = `select internalid,scriptid from CustomRecordType WHERE internalid = ${rectype};`;
+            const results = query.runSuiteQL.promise({
+                query: qry
+            });
+            results.then(result => {
+                const records = result.asMappedResults();
+                const recordName = records[0].scriptid.toLowerCase();
+                getRecordFieldData(recordName);
+            });
+        });
+    } else {
+        getRecordFieldData(searchType.toLowerCase());
+    }
+
+
+    require(['N/search'], function(search) {
+        const results = search.create({
+            type: "account",
+            columns: ["externalid","lastmodifiedby"]
+        });
+        console.log(results.toJSON());
+    });
+
+}
+
+function getRecordFieldData(recordName) {
+
+    const data = {"scriptId":recordName};
+
+    fetch(`/app/recordscatalog/rcendpoint.nl?action=getRecordTypeDetail&data=${JSON.stringify(data)}`,{
+        headers: {
+            "Accept": "application/json; q=1.0, text/*; q=0.8, */*; q=0.1"
+        }
+    })
+    .then((response) => response.json())
+    .then((data) => {
+            recordFieldData = data;
+            console.log(recordFieldData);
+            console.log('done loading record field data');
+
+    });
+
+}
+
+
+function displayFieldHelp(field) {
+
+    console.log(field);
+
+    
+    document.getElementById('ff_field_info_box').innerHTML = "";
+    //console.log(recordFieldData);
+
+    const theField = recordFieldData.data.fields.find(e => e.id.toLowerCase() == field);
+
+    const theJoins = theField.joins;
+
+    console.log(theField);
+
+    const fieldType = getFieldType(field);
+
+    var theContent = `
+    <b>${fieldType}</b><br/>
+    <b>Data Type:</b> ${theField.dataType}<br/>
+    <b>Field Type:</b> ${theField.fieldType}</b><br/>
+   `;
+
+
+    if (theJoins) {
+        var arrUniqueJoins = [];
+        for (let join of theJoins) {
+            console.log(join);
+            if (join.sourceTargetType.joinPairs.length == 0) { continue; }
+            let sourceTargetType = join.sourceTargetType.joinPairs[0].label;
+            console.log(sourceTargetType);
+            if (!arrUniqueJoins.includes(sourceTargetType)) {
+                arrUniqueJoins.push(sourceTargetType);
+            }
+        }
+    
+        for (let uniqueJoin of arrUniqueJoins) {
+            theContent += `
+            ${uniqueJoin}
+            `;
+        }    
+    }
+
+
+
+    document.getElementById('ff_field_info_box').innerHTML = theContent;
+
+}
+
+getRecordData();
+
+//console.log(accountRecords);
 
 // Returns true if Field Finder is set to default settings
 function isFieldFinderDefault(fieldFinder) {
@@ -269,35 +377,6 @@ function addFieldFinderFooterElement(fieldSelector) {
 }
 
 
-async function getRecordData() {
-    
-}
-
-
-function displayFieldHelp(field) {
-    const searchType = document.getElementById('searchtype').value.toLowerCase();
-    document.getElementById('ff_field_info_box').innerHTML = "";
-    fetch(`/core/help/fieldhelp.nl?flhtp=USR&f=${field}&p=${searchType}`,{
-        headers: {
-            "Accept": "application/json; q=1.0, text/*; q=0.8, */*; q=0.1"
-        }
-    })
-    .then(response => {
-        response.json().then(jsonResponse => {
-            const fieldHelpText = jsonResponse.text;
-            const fieldType = getFieldType(field);
-            const fieldDataType =  rfTypes[field];
-            const theContent = `
-            <b>${fieldType} - ${fieldDataType}</b>
-            <br/><br/>
-            ${fieldHelpText}
-            `
-            document.getElementById('ff_field_info_box').innerHTML = theContent;
-//            console.log(jsonResponse);
-        });
-    });
-
-}
 
 // Prepare Dropdown option
 function prepareDropdownOption(dropdown, opt, index) {
@@ -310,15 +389,13 @@ function prepareDropdownOption(dropdown, opt, index) {
         fieldType = 'Related Fields'
     }
 
-    console.log(`Orig: ${fieldId}`);
-
     const newFieldName = fieldName.replace(/\((Custom Body|Custom Column|Custom)\)/i,'');
     let newFieldId = fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,"");
     
-    /*const searchType = document.getElementById('searchtype').value.toLowerCase();
+    const searchType = document.getElementById('searchtype').value.toLowerCase();
     if (searchType != "custom") {
         newFieldId = newFieldId.replace(new RegExp(`^${searchType}_`),"");
-    }*/
+    }
 
     opt.setAttribute('ff_fieldtype',fieldType);
     opt.setAttribute('ff_fieldname',newFieldName);
@@ -331,12 +408,11 @@ function prepareDropdownOption(dropdown, opt, index) {
     fieldNameElement.classList.add('ff_option');
     fieldNameElement.style.setProperty('width','35%');
     fieldNameElement.textContent=newFieldName;
-    fieldNameElement.setAttribute("onMouseOver",`displayFieldHelp('${newFieldId}');`)
+    fieldNameElement.setAttribute("onMouseOver",`displayFieldHelp('${fieldId}');`)
 
     const fieldIdElement = document.createElement('span');
     fieldIdElement.classList.add('ff_option');
     fieldIdElement.style.setProperty('width','35%');
-    console.log(`New: ${newFieldId}`);
 
     fieldIdElement.textContent = fieldType == 'Related Fields' ? '' : opt.getAttribute('ff_fieldid');
 
@@ -371,6 +447,8 @@ function prepareDropdown(fieldSelector) {
         dropdown.buildDiv();
     }
 
+    console.log(dropdown);
+
     // Increase width of the options element
     dropdown.div.style.setProperty('width','800px');
     dropdown.div.style.setProperty('margin-bottom','25px');
@@ -378,8 +456,6 @@ function prepareDropdown(fieldSelector) {
 
     // Set the ID of the options element so we can access it later
     dropdown.div.id = `${fieldSelector.id}_dropdown`;
-
-    console.log(dropdown);
 
     // Set ID of dropdown div so we can access it later
     fieldSelector.setAttribute('dropdown',dropdown.div.id);
@@ -511,3 +587,4 @@ function filterDropdowns (fieldSelector) {
     const ffFilterStatus = footerDiv.childNodes[0];
     ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
 }
+
