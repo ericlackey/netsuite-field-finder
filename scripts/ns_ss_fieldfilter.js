@@ -7,6 +7,8 @@
 
 "use strict"
 
+var ffMinimized = true;
+
 // Define the NetSuite field dropdowns where we want to add filtering capability
 const fieldsToFilter = [
     "input[id^='inpt_filterfilter']",
@@ -18,7 +20,7 @@ const fieldsToFilter = [
     "input[id^='inpt_filterfield']"
 ];
 
-var recordFieldData;
+var recordFieldData, recordFieldData2;
 
 // Prepare the dropdowns for Field Filter
 document.querySelectorAll(fieldsToFilter.join(',')).forEach((fieldSelector) => {
@@ -44,6 +46,8 @@ function resetFieldFinder(fieldSelector) {
     filterDropdowns(fieldSelector);
 }
 
+var recordNameX;
+
 function getRecordData() {
 
     console.log('loading record field data');
@@ -60,6 +64,7 @@ function getRecordData() {
             results.then(result => {
                 const records = result.asMappedResults();
                 const recordName = records[0].scriptid.toLowerCase();
+                recordNameX = recordName;
                 getRecordFieldData(recordName);
             });
         });
@@ -67,14 +72,9 @@ function getRecordData() {
         getRecordFieldData(searchType.toLowerCase());
     }
 
-
-    require(['N/search'], function(search) {
-        const results = search.create({
-            type: "account",
-            columns: ["externalid","lastmodifiedby"]
-        });
-        console.log(results.toJSON());
-    });
+    if (!recordNameX) {
+        recordNameX = searchType.toLowerCase();
+    };
 
 }
 
@@ -95,54 +95,75 @@ function getRecordFieldData(recordName) {
 
     });
 
+    fetch(`/usr-api/recordMetadata/${recordName}`,{
+        headers: {
+            "Accept": "*/*"
+        }
+    })
+    .then((response) => response.json())
+    .then((data) => {
+            recordFieldData2 = data;
+            console.log(recordFieldData2);
+            console.log('done loading record field data2');
+
+    });
+
 }
 
 
 function displayFieldHelp(field) {
-
-    console.log(field);
-
     
-    document.getElementById('ff_field_info_box').innerHTML = "";
+    document.getElementById('ff_field_help_box').innerHTML = "";
+    document.getElementById('ff_field_type_box').innerHTML = "";
     //console.log(recordFieldData);
 
-    const theField = recordFieldData.data.fields.find(e => e.id.toLowerCase() == field);
+    console.log(`looking for ${field}`)
 
-    const theJoins = theField.joins;
+    console.log(recordNameX);
+
+    const theField = recordFieldData.data.fields.find(e => e.id.toLowerCase() == field.toLowerCase());
+
+    //const theField2 = recordFieldData2.fields.find(e => e.id.toLowerCase() == field.toLowerCase());
+
+    //const theJoins = theField.joins;
 
     console.log(theField);
+
+    if (!theField) {
+        return;
+    }
 
     const fieldType = getFieldType(field);
 
     var theContent = `
     <b>${fieldType}</b><br/>
-    <b>Data Type:</b> ${theField.dataType}<br/>
-    <b>Field Type:</b> ${theField.fieldType}</b><br/>
+    <b>Data Type:</b> ${theField?.dataType}<br/>
+    <b>Field Type:</b> ${theField?.fieldType}</b><br/>
    `;
 
+   if (theField.joins && theField.joins.length > 0) {
+      theContent += `
+      <b>Relationship:</b> ${theField.joins[0].label}<br/>${theField.joins[0].sourceTargetType.joinPairs[0].label.split("=")[1]}
+      `;
+   }
 
-    if (theJoins) {
-        var arrUniqueJoins = [];
-        for (let join of theJoins) {
-            console.log(join);
-            if (join.sourceTargetType.joinPairs.length == 0) { continue; }
-            let sourceTargetType = join.sourceTargetType.joinPairs[0].label;
-            console.log(sourceTargetType);
-            if (!arrUniqueJoins.includes(sourceTargetType)) {
-                arrUniqueJoins.push(sourceTargetType);
-            }
+   if (recordNameX.startsWith("custom")) {
+        recordNameX = "customrecord";
+   }
+
+   fetch(`/core/help/fieldhelp.nl?flhtp=USR&f=${field}&p=${recordNameX}`,{
+        headers: {
+            "Accept": "application/json; q=1.0, text/*; q=0.8, */*; q=0.1"
         }
-    
-        for (let uniqueJoin of arrUniqueJoins) {
-            theContent += `
-            ${uniqueJoin}
-            `;
-        }    
-    }
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        document.getElementById('ff_field_help_box').innerHTML = data.text;
 
+    });
 
+    document.getElementById('ff_field_type_box').innerHTML = theContent;
 
-    document.getElementById('ff_field_info_box').innerHTML = theContent;
 
 }
 
@@ -166,11 +187,7 @@ function isFieldFinderDefault(fieldFinder) {
 function getFieldType(fieldId) {
     fieldId = fieldId.toLowerCase();
     let fieldType = 'Standard Field';
-    if (fieldId.match(/^(custbody)/)) {
-        fieldType = 'Custom Body';
-    } else if (fieldId.match(/^(custcol)/)) {
-        fieldType = 'Custom Column';
-    } else if (fieldId.match(/^(custrecord|custentity|custitem)/)) {
+    if (fieldId.match(/^(custrecord|custentity|custitem|custbody|custcol)/)) {
         fieldType = 'Custom Field';
     }
     return fieldType;
@@ -304,27 +321,30 @@ function addFieldFinderFilterElements(fieldSelector) {
     buttonGroup.style.setProperty('padding-left','20px');
 
     const fieldInfoDiv = document.createElement('div');
-    fieldInfoDiv.textContent = "hello";
     fieldInfoDiv.classList.add('ff_field_info_box');
     fieldInfoDiv.setAttribute('id','ff_field_info_box');
+
+    const fieldTypeDiv = document.createElement('div');
+    fieldTypeDiv.classList.add('ff_field_type_box');
+    fieldTypeDiv.setAttribute('id','ff_field_type_box');
+
+    const fieldHelpDiv = document.createElement('div');
+    fieldHelpDiv.classList.add('ff_field_help_box');
+    fieldHelpDiv.setAttribute('id','ff_field_help_box');
+
+    fieldInfoDiv.appendChild(fieldTypeDiv);
+    fieldInfoDiv.appendChild(fieldHelpDiv);
+    
     dropdown.div.insertBefore(fieldInfoDiv,dropdown.div.childNodes[0]);
+
+
 
     dropdown.fieldFinder.buttons = [];
     dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'standardFields', 'Standard')));
 
     // Determine what type of fields we have available so we only show filters for those types
-    const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
-    const customColumnFields = dropdown.valueArray.find(el => el.match(/^(custcol)/i)) ? true : false;
-    const customFields = dropdown.valueArray.find(el => el.match(/^(custitem|custrecord|custentity)/i)) ? true : false;
+    const customFields = dropdown.valueArray.find(el => el.match(/^(custbody|custcol|custitem|custrecord|custentity)/i)) ? true : false;
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
-
-    if (customBodyFields) {
-        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customBodyFields', 'Custom Body')));
-    }
-
-    if (customColumnFields) {
-        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customColumnFields', 'Custom Column')));
-    }
 
     if (customFields) {
         dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customFields', 'Custom')));
@@ -335,6 +355,8 @@ function addFieldFinderFilterElements(fieldSelector) {
     }
 
     fieldFilter.appendChild(buttonGroup);
+
+    fieldFilter.appendChild(createFieldDetailsButton(fieldSelector));
 
     dropdown.fieldFinder.standardFields = false;
     dropdown.fieldFinder.customBodyFields = false;
@@ -406,16 +428,17 @@ function prepareDropdownOption(dropdown, opt, index) {
 
     const fieldNameElement = document.createElement('span');
     fieldNameElement.classList.add('ff_option');
-    fieldNameElement.style.setProperty('width','35%');
+    fieldNameElement.style.setProperty('width','280px');
     fieldNameElement.textContent=newFieldName;
-    fieldNameElement.setAttribute("onMouseOver",`displayFieldHelp('${fieldId}');`)
+    fieldNameElement.setAttribute("onMouseOver",`displayFieldHelp('${newFieldId}');`)
 
     const fieldIdElement = document.createElement('span');
     fieldIdElement.classList.add('ff_option');
-    fieldIdElement.style.setProperty('width','35%');
+    fieldIdElement.style.setProperty('width','280px');
 
     fieldIdElement.textContent = fieldType == 'Related Fields' ? '' : opt.getAttribute('ff_fieldid');
 
+    /*
     const fieldTypeElement = document.createElement('span');
     fieldTypeElement.classList.add('ff_option');
     fieldTypeElement.style.setProperty('width','15%');
@@ -428,7 +451,7 @@ function prepareDropdownOption(dropdown, opt, index) {
     fieldDataTypeElement.textContent = fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[fieldId] : '';
 
     //fieldDataTypeElement.innerHTML = '<svg class="uif552 uif555 uif558 uif561" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="/assets/@uif-js/core/4.0.0-feature-uicr-8075-hotfix.93/resources/img/RefreshedIcon.svg#DATE" role="img" aria-label="Date" data-border-radius="square" id="uif2106" data-widget="Image" data-status="none" style="width: 24px; height: 24px;"><path d="M13 16h1v-1h-1v-5h-3v1h1v4h-1v1h3z"></path><path d="M16 5v2h-1V5H9v2H8V5H5v14h14V5zm1.5 12.5h-11v-9h11z"></path></svg>';
-
+    */
 
 
     opt.appendChild(fieldNameElement);
@@ -450,7 +473,7 @@ function prepareDropdown(fieldSelector) {
     console.log(dropdown);
 
     // Increase width of the options element
-    dropdown.div.style.setProperty('width','800px');
+    dropdown.div.style.setProperty('width','560px');
     dropdown.div.style.setProperty('margin-bottom','25px');
     dropdown.div.style.setProperty('margin-top','32px');
 
@@ -485,6 +508,31 @@ function createFilterButton(fieldSelector, fieldId, title) {
     buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleButtonClick(this,${fieldSelector.id});`);
     buttonElement.setAttribute('value',0);
     buttonElement.innerText=title;
+    return buttonElement;
+}
+
+function handleFieldDetailsButtonClick(fieldSelector) {
+    const dropdown = getDropdown(fieldSelector);
+    if (ffMinimized) {
+        dropdown.div.style.setProperty('width','800px');
+        document.getElementById('ff_field_info_box').style.visibility = 'visible';
+        ffMinimized = false;
+    } else {
+        dropdown.div.style.setProperty('width','560px');
+        document.getElementById('ff_field_info_box').style.visibility = 'hidden';
+        ffMinimized = true;
+    }
+}
+
+// Add a field type button filter
+function createFieldDetailsButton(fieldSelector) {
+    const buttonElement = document.createElement('button');
+    buttonElement.setAttribute('onpointerdown','event.preventDefault();');
+    buttonElement.setAttribute('id','field_details_button');
+    buttonElement.setAttribute('type','button');
+    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleFieldDetailsButtonClick(${fieldSelector.id});`);
+    buttonElement.setAttribute('value',0);
+    buttonElement.innerText='Details';
     return buttonElement;
 }
 
