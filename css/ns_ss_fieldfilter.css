@@ -11,8 +11,6 @@
     text-overflow: ellipsis;
 }
 
-
-
 .ff_multiedit {
   margin: 0px;
   padding: 0px;
@@ -24,13 +22,7 @@
 
 .ff_multiedit_selected::before {
   content: "\2705";
-  color: green;
 }
-
-.ff_multiedit_not_selected:hover::before {
-  color: white;
-}
-
 
 .ff_div {
     background-color:#E5E5E5;
@@ -53,7 +45,6 @@
     padding-right: 10px;
     visibility: visible;
     width: 100%;
-    text-wrap: wrap;
 }
 
 .ff_status {
@@ -71,7 +62,7 @@
   padding: 2px 4px; /* Some padding */
   cursor: pointer; /* Pointer/hand icon */
   float: left; /* Float the buttons side by side */
-  width: 70px;
+  width: 100px;
   font-size: 12px;
 }
 
@@ -89,4 +80,3 @@
 .ff_btn_enabled {
   background-color: #DFF1DF;
 }
-

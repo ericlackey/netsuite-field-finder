@@ -7,7 +7,6 @@
 
 "use strict"
 
-
 // Define the NetSuite field dropdowns where we want to add filtering capability
 const fieldsToFilter = [
     "input[id^='inpt_filterfilter']",
@@ -314,7 +313,6 @@ function prepareDropdownOption(dropdown, opt, index) {
             fieldMultiEditElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();multiEditField('${fieldId}');`);
             fieldMultiEditElement.setAttribute('onmouseup','event.preventDefault();event.stopImmediatePropagation();');
             fieldMultiEditElement.setAttribute('onclick',"event.preventDefault();event.stopImmediatePropagation();");
-
         }
         opt.appendChild(fieldMultiEditElement);
     }
@@ -480,7 +478,7 @@ function filterDropdowns (fieldSelector) {
 }
 
 // Add a post listener on build of return fields. This allows us to detect when user deletes or adds fields outside of Field Finder.
-async function prepareReturnFieldsMachine() {
+function prepareReturnFieldsMachine() {
     try {
         returnfields_machine.postBuildTableListeners.push(resetMutliEditIcons);
         returnfields_machine.buildtable();
