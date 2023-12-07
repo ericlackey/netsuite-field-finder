@@ -7,7 +7,6 @@
 
 "use strict"
 
-var ffMinimized = true;
 
 // Define the NetSuite field dropdowns where we want to add filtering capability
 const fieldsToFilter = [
@@ -19,8 +18,6 @@ const fieldsToFilter = [
     "input[id^='inpt_valuefield']",
     "input[id^='inpt_filterfield']"
 ];
-
-var recordFieldData, recordFieldData2;
 
 // Prepare the dropdowns for Field Filter
 document.querySelectorAll(fieldsToFilter.join(',')).forEach((fieldSelector) => {
@@ -62,7 +59,11 @@ function isFieldFinderDefault(fieldFinder) {
 function getFieldType(fieldId) {
     fieldId = fieldId.toLowerCase();
     let fieldType = 'Standard Field';
-    if (fieldId.match(/^(custrecord|custentity|custitem|custbody|custcol)/)) {
+    if (fieldId.match(/^(custbody)/)) {
+        fieldType = 'Custom Body';
+    } else if (fieldId.match(/^(custcol)/)) {
+        fieldType = 'Custom Column';
+    } else if (fieldId.match(/^(custrecord|custentity|custitem)/)) {
         fieldType = 'Custom Field';
     }
     return fieldType;
@@ -148,8 +149,6 @@ function handleFieldSelectorClick(event) {
 
 // Handles when a user clicks on one of the field type buttons
 function handleButtonClick(button, fieldSelector) {
-
-    
     const dropdown = getDropdown(fieldSelector);
     const previousValue = dropdown.fieldFinder[button.id];
 
@@ -198,31 +197,22 @@ function addFieldFinderFilterElements(fieldSelector) {
     buttonGroup.setAttribute('id','ff_btn_group');
     buttonGroup.style.setProperty('padding-left','20px');
 
-    const fieldInfoDiv = document.createElement('div');
-    fieldInfoDiv.classList.add('ff_field_info_box');
-    fieldInfoDiv.setAttribute('id','ff_field_info_box');
-
-    const fieldTypeDiv = document.createElement('div');
-    fieldTypeDiv.classList.add('ff_field_type_box');
-    fieldTypeDiv.setAttribute('id','ff_field_type_box');
-
-    const fieldHelpDiv = document.createElement('div');
-    fieldHelpDiv.classList.add('ff_field_help_box');
-    fieldHelpDiv.setAttribute('id','ff_field_help_box');
-
-    fieldInfoDiv.appendChild(fieldTypeDiv);
-    fieldInfoDiv.appendChild(fieldHelpDiv);
-    
-    dropdown.div.insertBefore(fieldInfoDiv,dropdown.div.childNodes[0]);
-
-
-
     dropdown.fieldFinder.buttons = [];
     dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'standardFields', 'Standard')));
 
     // Determine what type of fields we have available so we only show filters for those types
-    const customFields = dropdown.valueArray.find(el => el.match(/^(custbody|custcol|custitem|custrecord|custentity)/i)) ? true : false;
+    const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
+    const customColumnFields = dropdown.valueArray.find(el => el.match(/^(custcol)/i)) ? true : false;
+    const customFields = dropdown.valueArray.find(el => el.match(/^(custitem|custrecord|custentity)/i)) ? true : false;
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
+
+    if (customBodyFields) {
+        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customBodyFields', 'Custom Body')));
+    }
+
+    if (customColumnFields) {
+        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customColumnFields', 'Custom Column')));
+    }
 
     if (customFields) {
         dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(fieldSelector, 'customFields', 'Custom')));
@@ -274,8 +264,6 @@ function addFieldFinderFooterElement(fieldSelector) {
     dropdown.fieldFinder.footer = dropdown.div.appendChild(footerDiv);
 }
 
-
-
 // Prepare Dropdown option
 function prepareDropdownOption(dropdown, opt, index) {
     const fieldId = dropdown.valueArray[index];
@@ -323,9 +311,10 @@ function prepareDropdownOption(dropdown, opt, index) {
             fieldMultiEditElement.classList.add('ff_multiedit_not_selected');
             fieldMultiEditElement.classList.add('ff_multiedit');
             fieldMultiEditElement.style.setProperty('text-align','center');
-            fieldMultiEditElement.setAttribute('onmousedown',`event.stopImmediatePropagation();multiEditField('${fieldId}');`);
-            fieldMultiEditElement.setAttribute('onmouseup','event.stopPropagation();');
-            fieldMultiEditElement.setAttribute('onclick',"event.stopImmediatePropagation();event.stopPropagation();");
+            fieldMultiEditElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();multiEditField('${fieldId}');`);
+            fieldMultiEditElement.setAttribute('onmouseup','event.preventDefault();event.stopImmediatePropagation();');
+            fieldMultiEditElement.setAttribute('onclick',"event.preventDefault();event.stopImmediatePropagation();");
+
         }
         opt.appendChild(fieldMultiEditElement);
     }
@@ -338,11 +327,8 @@ function prepareDropdownOption(dropdown, opt, index) {
     return true;
 }
 
-
 // Prepare the dropdown for use with Field Filter
 function prepareDropdown(fieldSelector) {
-
-
     const dropdown = getDropdown(fieldSelector);
 
     if (!dropdown.div) {
@@ -387,7 +373,6 @@ function createFilterButton(fieldSelector, fieldId, title) {
     buttonElement.innerText=title;
     return buttonElement;
 }
-
 
 // Automatically set focus on text box so that user can immediately start typing a search string
 function setFocusOnTextBox() {
@@ -457,18 +442,23 @@ function filterDropdowns (fieldSelector) {
             opt.style.setProperty('display','none');
         }
 
+        var childStart = 0;
+        if (dropdown.name == 'rffield') {
+            childStart = 1;
+        }
+
         if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
-                opt.children[1].innerHTML = newFieldNameHTML;
+                opt.children[childStart].innerHTML = newFieldNameHTML;
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
                     const newFieldIdHTML = opt.getAttribute('ff_fieldid').toLowerCase().replace(searchRegex, '<mark class="highlight">$&</mark>');
-                    opt.children[2].innerHTML = newFieldIdHTML;
+                    opt.children[childStart+1].innerHTML = newFieldIdHTML;
                 }
             } else {
-                opt.children[1].innerHTML = opt.getAttribute('ff_fieldname');
+                opt.children[childStart].innerHTML = opt.getAttribute('ff_fieldname');
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
-                    opt.children[2].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
+                    opt.children[childStart+1].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
                 }
             }
         }
@@ -490,12 +480,10 @@ function filterDropdowns (fieldSelector) {
 }
 
 // Add a post listener on build of return fields. This allows us to detect when user deletes or adds fields outside of Field Finder.
-function prepareReturnFieldsMachine() {
-    if (typeof returnfields_machine == 'undefined') {
-        return;
-    }
+async function prepareReturnFieldsMachine() {
     try {
         returnfields_machine.postBuildTableListeners.push(resetMutliEditIcons);
+        returnfields_machine.buildtable();
     } catch (err) {
         console.error(`Could not add listener to returnfields machine due to error: ${err}`);
     }
@@ -536,28 +524,20 @@ function resetMutliEditIcons() {
 }
 
 function multiEditField(fieldId) {
-    console.log(returnfields_machine);
     try {
         const selectedFields = returnfields_machine.dataManager.getLineArray();
         const fieldIdArray = selectedFields.map((x)=>{return x[0];});
         const index = parseInt(fieldIdArray.findIndex((x) => x == fieldId));
         if (index == -1) {
-            console.log(`Adding field ${fieldId}`);
             const insIndex = returnfields_machine.getNextIndex();
             returnfields_machine.insertdata(fieldId,insIndex);
         } else {
-            returnfields_machine.isdeleting = true;
-            console.log(`Removing field ${fieldId} from ${index+1}`);
-            returnfields_machine.dataManager.removeLine(index+1);
-            returnfields_machine.decrementIndex();
-            returnfields_machine.recalcType = "remove";
-            returnfields_machine.recalc();
-            returnfields_machine.isdeleting = false;
-            returnfields_machine.waschanged = true;
+            returnfields_machine.deleteline(index+1, true);
         }
         returnfields_machine.buildtable();
     } catch (err) {
         console.error(`An error occured while perfoming multi edit action: ${err}`);
+
     }
 }
 
