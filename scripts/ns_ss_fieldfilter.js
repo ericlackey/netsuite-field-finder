@@ -46,131 +46,6 @@ function resetFieldFinder(fieldSelector) {
     filterDropdowns(fieldSelector);
 }
 
-var recordNameX;
-
-function getRecordData() {
-
-    console.log('loading record field data');
-
-    const searchType = document.getElementById('searchtype').value;
-    const rectype = document.getElementById('rectype').value;
-
-    if (searchType == 'Custom') {
-        require(['N/query'], function(query) {
-            const qry = `select internalid,scriptid from CustomRecordType WHERE internalid = ${rectype};`;
-            const results = query.runSuiteQL.promise({
-                query: qry
-            });
-            results.then(result => {
-                const records = result.asMappedResults();
-                const recordName = records[0].scriptid.toLowerCase();
-                recordNameX = recordName;
-                getRecordFieldData(recordName);
-            });
-        });
-    } else {
-        getRecordFieldData(searchType.toLowerCase());
-    }
-
-    if (!recordNameX) {
-        recordNameX = searchType.toLowerCase();
-    };
-
-}
-
-function getRecordFieldData(recordName) {
-
-    const data = {"scriptId":recordName};
-
-    fetch(`/app/recordscatalog/rcendpoint.nl?action=getRecordTypeDetail&data=${JSON.stringify(data)}`,{
-        headers: {
-            "Accept": "application/json; q=1.0, text/*; q=0.8, */*; q=0.1"
-        }
-    })
-    .then((response) => response.json())
-    .then((data) => {
-            recordFieldData = data;
-            console.log(recordFieldData);
-            console.log('done loading record field data');
-
-    });
-
-    fetch(`/usr-api/recordMetadata/${recordName}`,{
-        headers: {
-            "Accept": "*/*"
-        }
-    })
-    .then((response) => response.json())
-    .then((data) => {
-            recordFieldData2 = data;
-            console.log(recordFieldData2);
-            console.log('done loading record field data2');
-
-    });
-
-}
-
-
-function displayFieldHelp(field) {
-    
-    document.getElementById('ff_field_help_box').innerHTML = "";
-    document.getElementById('ff_field_type_box').innerHTML = "";
-    //console.log(recordFieldData);
-
-    console.log(`looking for ${field}`)
-
-    console.log(recordNameX);
-
-    const theField = recordFieldData.data.fields.find(e => e.id.toLowerCase() == field.toLowerCase());
-
-    //const theField2 = recordFieldData2.fields.find(e => e.id.toLowerCase() == field.toLowerCase());
-
-    //const theJoins = theField.joins;
-
-    console.log(theField);
-
-    if (!theField) {
-        return;
-    }
-
-    const fieldType = getFieldType(field);
-
-    var theContent = `
-    <b>${fieldType}</b><br/>
-    <b>Data Type:</b> ${theField?.dataType}<br/>
-    <b>Field Type:</b> ${theField?.fieldType}</b><br/>
-   `;
-
-   if (theField.joins && theField.joins.length > 0) {
-      theContent += `
-      <b>Relationship:</b> ${theField.joins[0].label}<br/>${theField.joins[0].sourceTargetType.joinPairs[0].label.split("=")[1]}
-      `;
-   }
-
-   if (recordNameX.startsWith("custom")) {
-        recordNameX = "customrecord";
-   }
-
-   fetch(`/core/help/fieldhelp.nl?flhtp=USR&f=${field}&p=${recordNameX}`,{
-        headers: {
-            "Accept": "application/json; q=1.0, text/*; q=0.8, */*; q=0.1"
-        }
-    })
-    .then((response) => response.json())
-    .then((data) => {
-        document.getElementById('ff_field_help_box').innerHTML = data.text;
-
-    });
-
-    document.getElementById('ff_field_type_box').innerHTML = theContent;
-
-
-}
-
-getRecordData();
-
-//console.log(accountRecords);
-
 // Returns true if Field Finder is set to default settings
 function isFieldFinderDefault(fieldFinder) {
     if (fieldFinder.searchInputField.value.length > 0) {
@@ -273,6 +148,8 @@ function handleFieldSelectorClick(event) {
 
 // Handles when a user clicks on one of the field type buttons
 function handleButtonClick(button, fieldSelector) {
+
+    
     const dropdown = getDropdown(fieldSelector);
     const previousValue = dropdown.fieldFinder[button.id];
 
@@ -311,6 +188,7 @@ function addFieldFinderFilterElements(fieldSelector) {
     searchTextInput.setAttribute('onkeypress',`handleKey(event,${fieldSelector.id});`);
     searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
+    searchTextInput.setAttribute('autocomplete','false');
 
     dropdown.fieldFinder = {};
     dropdown.fieldFinder.searchInputField = fieldFilter.appendChild(searchTextInput);
@@ -355,8 +233,6 @@ function addFieldFinderFilterElements(fieldSelector) {
     }
 
     fieldFilter.appendChild(buttonGroup);
-
-    fieldFilter.appendChild(createFieldDetailsButton(fieldSelector));
 
     dropdown.fieldFinder.standardFields = false;
     dropdown.fieldFinder.customBodyFields = false;
@@ -412,68 +288,69 @@ function prepareDropdownOption(dropdown, opt, index) {
     }
 
     const newFieldName = fieldName.replace(/\((Custom Body|Custom Column|Custom)\)/i,'');
-    let newFieldId = fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,"");
-    
-    const searchType = document.getElementById('searchtype').value.toLowerCase();
-    if (searchType != "custom") {
-        newFieldId = newFieldId.replace(new RegExp(`^${searchType}_`),"");
-    }
 
     opt.setAttribute('ff_fieldtype',fieldType);
     opt.setAttribute('ff_fieldname',newFieldName);
-    opt.setAttribute('ff_fieldid',newFieldId);
-    
+    opt.setAttribute('ff_fieldid',fieldId.toLowerCase().replace(/^(stdentity|stdbody|custom_|transaction_)/,''));
     opt.style.setProperty('display','block');
     opt.textContent='';
 
     const fieldNameElement = document.createElement('span');
     fieldNameElement.classList.add('ff_option');
-    fieldNameElement.style.setProperty('width','280px');
+    fieldNameElement.style.setProperty('width','35%');
     fieldNameElement.textContent=newFieldName;
-    fieldNameElement.setAttribute("onMouseOver",`displayFieldHelp('${newFieldId}');`)
 
     const fieldIdElement = document.createElement('span');
     fieldIdElement.classList.add('ff_option');
-    fieldIdElement.style.setProperty('width','280px');
-
+    fieldIdElement.style.setProperty('width','35%');
     fieldIdElement.textContent = fieldType == 'Related Fields' ? '' : opt.getAttribute('ff_fieldid');
 
-    /*
     const fieldTypeElement = document.createElement('span');
     fieldTypeElement.classList.add('ff_option');
     fieldTypeElement.style.setProperty('width','15%');
     fieldTypeElement.textContent=fieldType;
-    //fieldTypeElement.innerHTML = '<svg class="uif552 uif555 uif558 uif561" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="/assets/@uif-js/core/4.0.0-feature-uicr-8075-hotfix.93/resources/img/RefreshedIcon.svg#DATE" role="img" aria-label="Date" data-border-radius="square" id="uif2106" data-widget="Image" data-status="none" style="width: 24px; height: 24px;"><path d="M13 16h1v-1h-1v-5h-3v1h1v4h-1v1h3z"></path><path d="M16 5v2h-1V5H9v2H8V5H5v14h14V5zm1.5 12.5h-11v-9h11z"></path></svg>';
 
     const fieldDataTypeElement = document.createElement('span');
     fieldDataTypeElement.classList.add('ff_option');
     fieldDataTypeElement.style.setProperty('width','15%');
     fieldDataTypeElement.textContent = fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[fieldId] : '';
 
-    //fieldDataTypeElement.innerHTML = '<svg class="uif552 uif555 uif558 uif561" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="/assets/@uif-js/core/4.0.0-feature-uicr-8075-hotfix.93/resources/img/RefreshedIcon.svg#DATE" role="img" aria-label="Date" data-border-radius="square" id="uif2106" data-widget="Image" data-status="none" style="width: 24px; height: 24px;"><path d="M13 16h1v-1h-1v-5h-3v1h1v4h-1v1h3z"></path><path d="M16 5v2h-1V5H9v2H8V5H5v14h14V5zm1.5 12.5h-11v-9h11z"></path></svg>';
-    */
-
+    if (dropdown.name == 'rffield') {
+        const fieldMultiEditElement = document.createElement('span');
+        fieldMultiEditElement.style.setProperty('width','5%');
+        fieldMultiEditElement.classList.add('ff_option'); 
+        if (fieldId != "" && fieldType != 'Related Fields') {
+            fieldMultiEditElement.classList.add('ff_multiedit_not_selected');
+            fieldMultiEditElement.classList.add('ff_multiedit');
+            fieldMultiEditElement.style.setProperty('text-align','center');
+            fieldMultiEditElement.setAttribute('onmousedown',`event.stopImmediatePropagation();multiEditField('${fieldId}');`);
+            fieldMultiEditElement.setAttribute('onmouseup','event.stopPropagation();');
+            fieldMultiEditElement.setAttribute('onclick',"event.stopImmediatePropagation();event.stopPropagation();");
+        }
+        opt.appendChild(fieldMultiEditElement);
+    }
 
     opt.appendChild(fieldNameElement);
     opt.appendChild(fieldIdElement);
-    //opt.appendChild(fieldTypeElement);
-    //opt.appendChild(fieldDataTypeElement);
+    opt.appendChild(fieldTypeElement);
+    opt.appendChild(fieldDataTypeElement);
 
     return true;
 }
 
+
 // Prepare the dropdown for use with Field Filter
 function prepareDropdown(fieldSelector) {
+
+
     const dropdown = getDropdown(fieldSelector);
 
     if (!dropdown.div) {
         dropdown.buildDiv();
     }
 
-    console.log(dropdown);
-
     // Increase width of the options element
-    dropdown.div.style.setProperty('width','560px');
+    dropdown.div.style.setProperty('width','800px');
     dropdown.div.style.setProperty('margin-bottom','25px');
     dropdown.div.style.setProperty('margin-top','32px');
 
@@ -511,30 +388,6 @@ function createFilterButton(fieldSelector, fieldId, title) {
     return buttonElement;
 }
 
-function handleFieldDetailsButtonClick(fieldSelector) {
-    const dropdown = getDropdown(fieldSelector);
-    if (ffMinimized) {
-        dropdown.div.style.setProperty('width','800px');
-        document.getElementById('ff_field_info_box').style.visibility = 'visible';
-        ffMinimized = false;
-    } else {
-        dropdown.div.style.setProperty('width','560px');
-        document.getElementById('ff_field_info_box').style.visibility = 'hidden';
-        ffMinimized = true;
-    }
-}
-
-// Add a field type button filter
-function createFieldDetailsButton(fieldSelector) {
-    const buttonElement = document.createElement('button');
-    buttonElement.setAttribute('onpointerdown','event.preventDefault();');
-    buttonElement.setAttribute('id','field_details_button');
-    buttonElement.setAttribute('type','button');
-    buttonElement.setAttribute('onclick',`event.stopImmediatePropagation();handleFieldDetailsButtonClick(${fieldSelector.id});`);
-    buttonElement.setAttribute('value',0);
-    buttonElement.innerText='Details';
-    return buttonElement;
-}
 
 // Automatically set focus on text box so that user can immediately start typing a search string
 function setFocusOnTextBox() {
@@ -607,15 +460,15 @@ function filterDropdowns (fieldSelector) {
         if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
-                opt.children[0].innerHTML = newFieldNameHTML;
+                opt.children[1].innerHTML = newFieldNameHTML;
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
                     const newFieldIdHTML = opt.getAttribute('ff_fieldid').toLowerCase().replace(searchRegex, '<mark class="highlight">$&</mark>');
-                    opt.children[1].innerHTML = newFieldIdHTML;
+                    opt.children[2].innerHTML = newFieldIdHTML;
                 }
             } else {
-                opt.children[0].innerHTML = opt.getAttribute('ff_fieldname');
+                opt.children[1].innerHTML = opt.getAttribute('ff_fieldname');
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
-                    opt.children[1].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
+                    opt.children[2].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
                 }
             }
         }
@@ -636,3 +489,76 @@ function filterDropdowns (fieldSelector) {
     ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
 }
 
+// Add a post listener on build of return fields. This allows us to detect when user deletes or adds fields outside of Field Finder.
+function prepareReturnFieldsMachine() {
+    if (typeof returnfields_machine == 'undefined') {
+        return;
+    }
+    try {
+        returnfields_machine.postBuildTableListeners.push(resetMutliEditIcons);
+    } catch (err) {
+        console.error(`Could not add listener to returnfields machine due to error: ${err}`);
+    }
+}
+
+// Reset multi-field edit icons on dropdown to reflect current search fields
+function resetMutliEditIcons() {
+
+    // First, reset all multiedit icons back to defauls
+    const dropdown = returnfields_machine?.layoutdd;
+
+    if (!dropdown) {
+        console.error('Could not find related dropdown.');
+        return;
+    }
+
+    const collection = dropdown.div.getElementsByClassName("ff_multiedit_selected");
+
+    Array.from(collection).forEach(function (element) {
+        element.classList.remove('ff_multiedit_selected');
+        element.classList.add('ff_multiedit_not_selected');
+    });
+
+    // Next get all result fields currently added to search
+    const selectedFields = returnfields_machine.dataManager.getLineArray();
+    const selectedFieldsArray = selectedFields.map((x)=>{return x[0];});
+
+    // Now set proper class for selected fiels so they show green checkmark
+    for (let sf of selectedFieldsArray) {        
+        const dropdownIndex = dropdown.valueToIndexMap[sf];
+        const dropdownOption = dropdown.divArray[dropdownIndex];
+        if (dropdownOption) {
+            dropdownOption.childNodes[0].classList.add('ff_multiedit_selected');
+            dropdownOption.childNodes[0].classList.remove('ff_multiedit_not_selected');    
+        }
+    }
+
+}
+
+function multiEditField(fieldId) {
+    console.log(returnfields_machine);
+    try {
+        const selectedFields = returnfields_machine.dataManager.getLineArray();
+        const fieldIdArray = selectedFields.map((x)=>{return x[0];});
+        const index = parseInt(fieldIdArray.findIndex((x) => x == fieldId));
+        if (index == -1) {
+            console.log(`Adding field ${fieldId}`);
+            const insIndex = returnfields_machine.getNextIndex();
+            returnfields_machine.insertdata(fieldId,insIndex);
+        } else {
+            returnfields_machine.isdeleting = true;
+            console.log(`Removing field ${fieldId} from ${index+1}`);
+            returnfields_machine.dataManager.removeLine(index+1);
+            returnfields_machine.decrementIndex();
+            returnfields_machine.recalcType = "remove";
+            returnfields_machine.recalc();
+            returnfields_machine.isdeleting = false;
+            returnfields_machine.waschanged = true;
+        }
+        returnfields_machine.buildtable();
+    } catch (err) {
+        console.error(`An error occured while perfoming multi edit action: ${err}`);
+    }
+}
+
+setTimeout(prepareReturnFieldsMachine, 1000);

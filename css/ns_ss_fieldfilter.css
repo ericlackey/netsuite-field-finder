@@ -11,6 +11,27 @@
     text-overflow: ellipsis;
 }
 
+
+
+.ff_multiedit {
+  margin: 0px;
+  padding: 0px;
+}
+
+.ff_multiedit_not_selected::before {
+  content: "\26F6";
+}
+
+.ff_multiedit_selected::before {
+  content: "\2705";
+  color: green;
+}
+
+.ff_multiedit_not_selected:hover::before {
+  color: white;
+}
+
+
 .ff_div {
     background-color:#E5E5E5;
     position: absolute;
