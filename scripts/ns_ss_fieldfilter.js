@@ -7,8 +7,6 @@
 
 "use strict"
 
-var multiEditEnabled = false;
-
 // Define the NetSuite field dropdowns where we want to add filtering capability
 const fieldsToFilter = [
     "input[id^='inpt_filterfilter']",
@@ -443,18 +441,19 @@ function filterDropdowns (fieldSelector) {
         }
 
         if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
-            const childStart = (dropdown.name == 'rffield') ? 1 : 0;
+            const fieldNameIndex = (dropdown.name == 'rffield') ? 1 : 0;
+            const fieldIdIndex = fieldNameElement+1;
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
-                opt.children[childStart].innerHTML = newFieldNameHTML;
+                opt.children[fieldNameIndex].innerHTML = newFieldNameHTML;
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
                     const newFieldIdHTML = opt.getAttribute('ff_fieldid').toLowerCase().replace(searchRegex, '<mark class="highlight">$&</mark>');
-                    opt.children[childStart+1].innerHTML = newFieldIdHTML;
+                    opt.children[fieldIdIndex].innerHTML = newFieldIdHTML;
                 }
             } else {
-                opt.children[childStart].innerHTML = opt.getAttribute('ff_fieldname');
+                opt.children[fieldNameIndex].innerHTML = opt.getAttribute('ff_fieldname');
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
-                    opt.children[childStart+1].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
+                    opt.children[fieldIdIndex].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
                 }
             }
         }
