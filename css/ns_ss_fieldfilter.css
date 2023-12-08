@@ -16,7 +16,7 @@
   padding: 0px;
 }
 
-.ff_multiedit_not_selected::before {
+.ff_multiedit::before {
   content: "\26F6";
 }
 

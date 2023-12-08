@@ -307,7 +307,6 @@ function prepareDropdownOption(dropdown, opt, index) {
         fieldMultiEditElement.style.setProperty('width','5%');
         fieldMultiEditElement.classList.add('ff_option');
         if (fieldId != "" && fieldType != 'Related Fields') {
-            fieldMultiEditElement.classList.add('ff_multiedit_not_selected');
             fieldMultiEditElement.classList.add('ff_multiedit');
             fieldMultiEditElement.style.setProperty('text-align','center');
             fieldMultiEditElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();handleMultiEditFieldClick('${fieldId}');`);
@@ -476,18 +475,7 @@ function filterDropdowns (fieldSelector) {
 
 
 
-// Add a post listener on build of return fields. This allows us to detect when user deletes or adds fields outside of Field Finder.
-function prepareReturnFieldsMachine() {
-    if (typeof returnfields_machine == 'undefined') {
-        return;
-    }
-    try {
-        returnfields_machine.postBuildTableListeners.push(refreshMutliEditIcons);
-        returnfields_machine.buildtable();
-    } catch (err) {
-        console.error(`Could not add listener to returnfields machine due to error: ${err}`);
-    }
-}
+
 
 // Refresh multi-field edit icons on dropdown to reflect current search fields
 function refreshMutliEditIcons() {
@@ -508,7 +496,6 @@ function refreshMutliEditIcons() {
     // Reset any selected fields back to default to account for any deleted
     Array.from(collection).forEach(function (element) {
         element.classList.remove('ff_multiedit_selected');
-        element.classList.add('ff_multiedit_not_selected');
     });
 
     // Now enable selected fields based on current line array
@@ -517,7 +504,6 @@ function refreshMutliEditIcons() {
         const dropdownOption = dropdown.divArray[dropdownIndex];
         if (dropdownOption) {
             dropdownOption.childNodes[0].classList.add('ff_multiedit_selected');
-            dropdownOption.childNodes[0].classList.remove('ff_multiedit_not_selected');
         }
     }
 
@@ -527,7 +513,6 @@ function refreshMutliEditIcons() {
 function handleMultiEditFieldClick(fieldId) {
     try {
         const indexOfField = returnfields_machine.dataManager.findFieldValueLineNum('rffield',fieldId);
-
         if (indexOfField == -1) {
             returnfields_machine.insertLine([fieldId,'','','','','',''],returnfields_machine.getLineCount()+1);
             returnfields_machine.incrementIndex();
@@ -542,4 +527,25 @@ function handleMultiEditFieldClick(fieldId) {
     }
 }
 
-setTimeout(prepareReturnFieldsMachine, 1000);
+// Returns promise that resolves when the returns fields machine is ready
+function ensureReturnFieldsMachineExists(timeout) {
+    var start = Date.now();
+    return new Promise(waitForReturnFieldsMachine);
+    function waitForReturnFieldsMachine(resolve, reject) {
+        if (typeof returnfields_machine != 'undefined' && returnfields_machine?.postBuildTableListeners)
+            resolve(returnfields_machine);
+        else if (timeout && (Date.now() - start) >= timeout)
+            reject(new Error("Timed out waiting for returnfieldsmachine."));
+        else
+            setTimeout(waitForReturnFieldsMachine.bind(this, resolve, reject), 100);
+    }
+}
+
+// Waits for the return fields machine to initialize
+ensureReturnFieldsMachineExists(5000).then((machine) => {
+    // Add a listener that fires when return fields table is rebuilt
+    machine.postBuildTableListeners.push(refreshMutliEditIcons);
+    machine.buildtable();
+}).catch((err) => {
+    console.log('Return fields machine not available: ' + err);
+});
