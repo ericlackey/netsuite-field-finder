@@ -310,7 +310,7 @@ function prepareDropdownOption(dropdown, opt, index) {
             fieldMultiEditElement.classList.add('ff_multiedit_not_selected');
             fieldMultiEditElement.classList.add('ff_multiedit');
             fieldMultiEditElement.style.setProperty('text-align','center');
-            fieldMultiEditElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();multiEditField('${fieldId}');`);
+            fieldMultiEditElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();handleMultiEditFieldClick('${fieldId}');`);
             fieldMultiEditElement.setAttribute('onmouseup','event.preventDefault();event.stopImmediatePropagation();');
             fieldMultiEditElement.setAttribute('onclick',"event.preventDefault();event.stopImmediatePropagation();");
         }
@@ -524,7 +524,7 @@ function refreshMutliEditIcons() {
 }
 
 // Allows user to add/remove multiple fields without leaving dropdown
-function multiEditField(fieldId) {
+function handleMultiEditFieldClick(fieldId) {
     try {
         const indexOfField = returnfields_machine.dataManager.findFieldValueLineNum('rffield',fieldId);
 
