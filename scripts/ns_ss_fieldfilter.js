@@ -473,10 +473,6 @@ function filterDropdowns (fieldSelector) {
     ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
 }
 
-
-
-
-
 // Refresh multi-field edit icons on dropdown to reflect current search fields
 function refreshMutliEditIcons() {
 
@@ -511,20 +507,28 @@ function refreshMutliEditIcons() {
 
 // Allows user to add/remove multiple fields without leaving dropdown
 function handleMultiEditFieldClick(fieldId) {
+
     try {
+        // Determine if field has already been added to return lines.
         const indexOfField = returnfields_machine.dataManager.findFieldValueLineNum('rffield',fieldId);
+
+        // If it has not, add it. Otherwise, delete it.
         if (indexOfField == -1) {
             returnfields_machine.insertLine([fieldId,'','','','','',''],returnfields_machine.getLineCount()+1);
             returnfields_machine.incrementIndex();
-        } else {
+        }
+        else {
             returnfields_machine.deleteline(indexOfField, true);
         }
-        returnfields_machine.setMachineIndex(returnfields_machine.getLineCount()+1);
-        returnfields_machine.clearline();
-        returnfields_machine.buildtable();
-    } catch (err) {
+
+        returnfields_machine.setMachineIndex(returnfields_machine.getLineCount()+1); // Set focus on last line
+        returnfields_machine.clearline(); // Clear the line
+        returnfields_machine.buildtable(); // Rebuild the results table
+    }
+    catch (err) {
         console.error(`An error occured while perfoming multi edit action: ${err}`);
     }
+
 }
 
 // Returns promise that resolves when the returns fields machine is ready
