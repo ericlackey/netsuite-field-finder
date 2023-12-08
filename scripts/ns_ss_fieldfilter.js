@@ -186,6 +186,7 @@ function addFieldFinderFilterElements(fieldSelector) {
     searchTextInput.setAttribute('onkeypress',`handleKey(event,${fieldSelector.id});`);
     searchTextInput.setAttribute('ondblclick','event.preventDefault();this.select();');
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
+    searchTextInput.setAttribute('autocomplete','false');
 
     dropdown.fieldFinder = {};
     dropdown.fieldFinder.searchInputField = fieldFilter.appendChild(searchTextInput);
@@ -250,8 +251,8 @@ function addFieldFinderFooterElement(fieldSelector) {
     
     const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='NetSuite Field Finder 0.19';
-    anchorElement.textContent='NetSuite Field Finder 0.19';
+    anchorElement.title='NetSuite Field Finder 0.20';
+    anchorElement.textContent='NetSuite Field Finder 0.20';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -300,6 +301,20 @@ function prepareDropdownOption(dropdown, opt, index) {
     fieldDataTypeElement.classList.add('ff_option');
     fieldDataTypeElement.style.setProperty('width','15%');
     fieldDataTypeElement.textContent = fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[fieldId] : '';
+
+    if (dropdown.name == 'rffield') {
+        const fieldMultiEditElement = document.createElement('span');
+        fieldMultiEditElement.style.setProperty('width','5%');
+        fieldMultiEditElement.classList.add('ff_option');
+        if (fieldId != "" && fieldType != 'Related Fields') {
+            fieldMultiEditElement.classList.add('ff_multiedit');
+            fieldMultiEditElement.style.setProperty('text-align','center');
+            fieldMultiEditElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();handleMultiEditFieldClick('${fieldId}');`);
+            fieldMultiEditElement.setAttribute('onmouseup','event.preventDefault();event.stopImmediatePropagation();');
+            fieldMultiEditElement.setAttribute('onclick',"event.preventDefault();event.stopImmediatePropagation();");
+        }
+        opt.appendChild(fieldMultiEditElement);
+    }
 
     opt.appendChild(fieldNameElement);
     opt.appendChild(fieldIdElement);
@@ -425,17 +440,19 @@ function filterDropdowns (fieldSelector) {
         }
 
         if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
+            const fieldNameIndex = (dropdown.name == 'rffield') ? 1 : 0;
+            const fieldIdIndex = fieldNameIndex+1;
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
-                opt.children[0].innerHTML = newFieldNameHTML;
+                opt.children[fieldNameIndex].innerHTML = newFieldNameHTML;
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
                     const newFieldIdHTML = opt.getAttribute('ff_fieldid').toLowerCase().replace(searchRegex, '<mark class="highlight">$&</mark>');
-                    opt.children[1].innerHTML = newFieldIdHTML;
+                    opt.children[fieldIdIndex].innerHTML = newFieldIdHTML;
                 }
             } else {
-                opt.children[0].innerHTML = opt.getAttribute('ff_fieldname');
+                opt.children[fieldNameIndex].innerHTML = opt.getAttribute('ff_fieldname');
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
-                    opt.children[1].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
+                    opt.children[fieldIdIndex].innerHTML = opt.getAttribute('ff_fieldid').toLowerCase();
                 }
             }
         }
@@ -455,3 +472,84 @@ function filterDropdowns (fieldSelector) {
     const ffFilterStatus = footerDiv.childNodes[0];
     ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
 }
+
+// Refresh multi-field edit icons on dropdown to reflect current search fields
+function refreshMutliEditIcons() {
+
+    // First, reset all multiedit icons back to defauls
+    const dropdown = returnfields_machine?.layoutdd;
+
+    if (!dropdown) {
+        console.error('Could not find related dropdown.');
+        return;
+    }
+
+    const selectedFieldsArray = returnfields_machine.dataManager.getLineArray().map((x)=>{return x[0];});
+
+    // Find all fields currently selected
+    const collection = dropdown.div.getElementsByClassName("ff_multiedit_selected");
+
+    // Reset any selected fields back to default to account for any deleted
+    Array.from(collection).forEach(function (element) {
+        element.classList.remove('ff_multiedit_selected');
+    });
+
+    // Now enable selected fields based on current line array
+    for (let sf of selectedFieldsArray) {        
+        const dropdownIndex = dropdown.valueToIndexMap[sf];
+        const dropdownOption = dropdown.divArray[dropdownIndex];
+        if (dropdownOption) {
+            dropdownOption.childNodes[0].classList.add('ff_multiedit_selected');
+        }
+    }
+
+}
+
+// Allows user to add/remove multiple fields without leaving dropdown
+function handleMultiEditFieldClick(fieldId) {
+
+    try {
+        // Determine if field has already been added to return lines.
+        const indexOfField = returnfields_machine.dataManager.findFieldValueLineNum('rffield',fieldId);
+
+        // If it has not, add it. Otherwise, delete it.
+        if (indexOfField == -1) {
+            returnfields_machine.insertLine([fieldId,'','','','','',''],returnfields_machine.getLineCount()+1);
+            returnfields_machine.incrementIndex();
+        }
+        else {
+            returnfields_machine.deleteline(indexOfField, true);
+        }
+
+        returnfields_machine.setMachineIndex(returnfields_machine.getLineCount()+1); // Set focus on last line
+        returnfields_machine.clearline(); // Clear the line
+        returnfields_machine.buildtable(); // Rebuild the results table
+    }
+    catch (err) {
+        console.error(`An error occured while perfoming multi edit action: ${err}`);
+    }
+
+}
+
+// Returns promise that resolves when the returns fields machine is ready
+function ensureReturnFieldsMachineExists(timeout) {
+    var start = Date.now();
+    return new Promise(waitForReturnFieldsMachine);
+    function waitForReturnFieldsMachine(resolve, reject) {
+        if (typeof returnfields_machine != 'undefined' && returnfields_machine?.postBuildTableListeners)
+            resolve(returnfields_machine);
+        else if (timeout && (Date.now() - start) >= timeout)
+            reject(new Error("Timed out waiting for returnfieldsmachine."));
+        else
+            setTimeout(waitForReturnFieldsMachine.bind(this, resolve, reject), 100);
+    }
+}
+
+// Waits for the return fields machine to initialize
+ensureReturnFieldsMachineExists(5000).then((machine) => {
+    // Add a listener that fires when return fields table is rebuilt
+    machine.postBuildTableListeners.push(refreshMutliEditIcons);
+    machine.buildtable();
+}).catch((err) => {
+    console.log('Return fields machine not available: ' + err);
+});

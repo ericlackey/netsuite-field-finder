@@ -7,6 +7,10 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.20
+- Added capability for user to add or delete multiple fields to results fields without leaving dropdown
+- Added autocomplete=false to search box to prevent autocomplete tools from interacting with field
+
 ### 0.19
 - Added field filter buttons into button group
 - Shortended button field names
