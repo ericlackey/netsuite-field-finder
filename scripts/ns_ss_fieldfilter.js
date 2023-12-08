@@ -7,6 +7,8 @@
 
 "use strict"
 
+var multiEditEnabled = false;
+
 // Define the NetSuite field dropdowns where we want to add filtering capability
 const fieldsToFilter = [
     "input[id^='inpt_filterfilter']",
@@ -251,8 +253,8 @@ function addFieldFinderFooterElement(fieldSelector) {
     
     const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='NetSuite Field Finder 0.19';
-    anchorElement.textContent='NetSuite Field Finder 0.19';
+    anchorElement.title='NetSuite Field Finder 0.20';
+    anchorElement.textContent='NetSuite Field Finder 0.20';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -305,7 +307,7 @@ function prepareDropdownOption(dropdown, opt, index) {
     if (dropdown.name == 'rffield') {
         const fieldMultiEditElement = document.createElement('span');
         fieldMultiEditElement.style.setProperty('width','5%');
-        fieldMultiEditElement.classList.add('ff_option'); 
+        fieldMultiEditElement.classList.add('ff_option');
         if (fieldId != "" && fieldType != 'Related Fields') {
             fieldMultiEditElement.classList.add('ff_multiedit_not_selected');
             fieldMultiEditElement.classList.add('ff_multiedit');
@@ -440,12 +442,8 @@ function filterDropdowns (fieldSelector) {
             opt.style.setProperty('display','none');
         }
 
-        var childStart = 0;
-        if (dropdown.name == 'rffield') {
-            childStart = 1;
-        }
-
         if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
+            const childStart = (dropdown.name == 'rffield') ? 1 : 0;
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
                 opt.children[childStart].innerHTML = newFieldNameHTML;
@@ -477,8 +475,13 @@ function filterDropdowns (fieldSelector) {
     ffFilterStatus.textContent=`Showing ${fieldsDisplayed} of ${fieldsTotal} fields.`;
 }
 
+
+
 // Add a post listener on build of return fields. This allows us to detect when user deletes or adds fields outside of Field Finder.
 function prepareReturnFieldsMachine() {
+    if (typeof returnfields_machine == 'undefined') {
+        return;
+    }
     try {
         returnfields_machine.postBuildTableListeners.push(resetMutliEditIcons);
         returnfields_machine.buildtable();
@@ -521,21 +524,22 @@ function resetMutliEditIcons() {
 
 }
 
+// Allows user to add/remove multiple fields without leaving dropdown
 function multiEditField(fieldId) {
     try {
-        const selectedFields = returnfields_machine.dataManager.getLineArray();
-        const fieldIdArray = selectedFields.map((x)=>{return x[0];});
-        const index = parseInt(fieldIdArray.findIndex((x) => x == fieldId));
-        if (index == -1) {
-            const insIndex = returnfields_machine.getNextIndex();
-            returnfields_machine.insertdata(fieldId,insIndex);
+        const indexOfField = returnfields_machine.dataManager.findFieldValueLineNum('rffield',fieldId);
+
+        if (indexOfField == -1) {
+            returnfields_machine.insertLine([fieldId,'','','','','',''],returnfields_machine.getLineCount()+1);
+            returnfields_machine.incrementIndex();
         } else {
-            returnfields_machine.deleteline(index+1, true);
+            returnfields_machine.deleteline(indexOfField, true);
         }
+        returnfields_machine.setMachineIndex(returnfields_machine.getLineCount()+1);
+        returnfields_machine.clearline();
         returnfields_machine.buildtable();
     } catch (err) {
         console.error(`An error occured while perfoming multi edit action: ${err}`);
-
     }
 }
 
