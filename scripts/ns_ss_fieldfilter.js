@@ -442,7 +442,7 @@ function filterDropdowns (fieldSelector) {
 
         if (opt.style.getPropertyValue('display') != 'none' && opt.getAttribute('ff_fieldname')) {
             const fieldNameIndex = (dropdown.name == 'rffield') ? 1 : 0;
-            const fieldIdIndex = fieldNameElement+1;
+            const fieldIdIndex = fieldNameIndex+1;
             if (searchText != '') {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
                 opt.children[fieldNameIndex].innerHTML = newFieldNameHTML;
@@ -482,15 +482,15 @@ function prepareReturnFieldsMachine() {
         return;
     }
     try {
-        returnfields_machine.postBuildTableListeners.push(resetMutliEditIcons);
+        returnfields_machine.postBuildTableListeners.push(refreshMutliEditIcons);
         returnfields_machine.buildtable();
     } catch (err) {
         console.error(`Could not add listener to returnfields machine due to error: ${err}`);
     }
 }
 
-// Reset multi-field edit icons on dropdown to reflect current search fields
-function resetMutliEditIcons() {
+// Refresh multi-field edit icons on dropdown to reflect current search fields
+function refreshMutliEditIcons() {
 
     // First, reset all multiedit icons back to defauls
     const dropdown = returnfields_machine?.layoutdd;
@@ -500,24 +500,24 @@ function resetMutliEditIcons() {
         return;
     }
 
+    const selectedFieldsArray = returnfields_machine.dataManager.getLineArray().map((x)=>{return x[0];});
+
+    // Find all fields currently selected
     const collection = dropdown.div.getElementsByClassName("ff_multiedit_selected");
 
+    // Reset any selected fields back to default to account for any deleted
     Array.from(collection).forEach(function (element) {
         element.classList.remove('ff_multiedit_selected');
         element.classList.add('ff_multiedit_not_selected');
     });
 
-    // Next get all result fields currently added to search
-    const selectedFields = returnfields_machine.dataManager.getLineArray();
-    const selectedFieldsArray = selectedFields.map((x)=>{return x[0];});
-
-    // Now set proper class for selected fiels so they show green checkmark
+    // Now enable selected fields based on current line array
     for (let sf of selectedFieldsArray) {        
         const dropdownIndex = dropdown.valueToIndexMap[sf];
         const dropdownOption = dropdown.divArray[dropdownIndex];
         if (dropdownOption) {
             dropdownOption.childNodes[0].classList.add('ff_multiedit_selected');
-            dropdownOption.childNodes[0].classList.remove('ff_multiedit_not_selected');    
+            dropdownOption.childNodes[0].classList.remove('ff_multiedit_not_selected');
         }
     }
 
