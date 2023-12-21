@@ -8,18 +8,18 @@
 "use strict"
 
 var ffSettings;
-var enableFieldFinder = true;
 var relatedTablesAdded = [];
 var ffSearchType = undefined;
 var ffRecType = -1;
 var enableMultiEditOption = false;
-var multiEditOptionReady = false;
 var enableRelatedFieldsExpansion = false;
 var enableFieldIdAttribute = false;
 var enableFieldNameAttribute = false;
 var enableFieldTypeAttribute = false;
 var enableDataTypeAttribute = false;
+var multiEditOptionReady = false;
 
+// Define field widths for field attributes
 const fieldAttributeWidths = {
     DATA_TYPE_WIDTH: 104,
     FIELD_TYPE_WIDTH: 112,
@@ -28,12 +28,20 @@ const fieldAttributeWidths = {
     MULTI_FUNCTION_WIDTH: 24
 };
 
-if (enableFieldFinder) {
-    NS.event.once(
-        NS.event.type.FORM_INITED,
-        initializeFieldFinder
-    );
-}
+// Define dropdowns name that will be replaced by Field Finder UI
+const dropdownsIncluded = [
+    "rffield",
+    "filterfilter",
+    "sort1",
+    "sort2",
+    "sort3",
+    "field"
+];
+
+NS.event.once(
+    NS.event.type.FORM_INITED,
+    initializeFieldFinder
+);
 
 function initializeFieldFinder() {
 
@@ -59,7 +67,6 @@ function initializeFieldFinder() {
     if (enableMultiEditOption)
         enableMultiEditOption = NS.Core.getURLParameter('ifrmcntnr') ? false : true;
 
-    // Waits for the return fields machine to initialize
     if (enableMultiEditOption) {
         if (machines?.returnfields?.postBuildTableListeners) {
             machines.returnfields.postBuildTableListeners.push(refreshMutliEditIcons);
@@ -73,16 +80,6 @@ function initializeFieldFinder() {
     // Disable multi edit option on popup windows
     ffSearchType = document.getElementById("searchtype")?.value || NS.Core.getURLParameter('searchtype');
     ffRecType = document.getElementById("rectype")?.value  || NS.Core.getURLParameter('rectype') || -1;
-
-    // Define dropdowns name that will be replaced by Field Finder UI
-    const dropdownsIncluded = [
-        "rffield",
-        "filterfilter",
-        "sort1",
-        "sort2",
-        "sort3",
-        "field"
-    ];
 
     // Prepare dropdowns for Field Filter UI
     if (typeof dropdowns != 'undefined') {
@@ -223,7 +220,6 @@ function handleFieldSelectorClick(event) {
 function handleButtonClick(button) {
 
     if (!currentDropdown) {
-        console.error('No active dropdown was found. Ignoring click.');
         return;
     }
 
@@ -282,15 +278,6 @@ function addFieldFinderFilterElements(dropdown) {
     const customColumnFields = dropdown.valueArray.find(el => el.match(/^(custcol)/i)) ? true : false;
     const customFields = dropdown.valueArray.find(el => el.match(/^(custitem|custrecord|custentity)/i)) ? true : false;
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
-
-    /*if (customBodyFields) {
-        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(dropdown, 'customBodyFields', 'Custom Body')));
-    }
-
-    if (customColumnFields) {
-        dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(dropdown, 'customColumnFields', 'Custom Column')));
-    }
-    */
 
     if (customFields || customColumnFields || customBodyFields) {
         dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(dropdown, 'customFields', 'Custom')));
@@ -409,12 +396,10 @@ function prepareDropdownOption(dropdown, opt, index) {
     }
 
     if (enableRelatedFieldsExpansion && fieldType == 'Related Fields') {
-        if (relatedTablesAdded.includes(`${dropdown.hddn?.machine?.name}_${fieldId}`)) {
+        if (relatedTablesAdded.includes(`${dropdown.hddn?.machine?.name}_${fieldId}`))
             multiFunctionElement.classList.add('ff_expandrelated_added');
-        }
-        else {
+        else
             multiFunctionElement.classList.add('ff_expandrelated'); 
-        }
         multiFunctionElement.setAttribute('onpointerup',`event.preventDefault();event.stopImmediatePropagation();handleRelatedTableClick('${fieldId}');`);
         multiFunctionElement.setAttribute('onmouseup','event.preventDefault();event.stopImmediatePropagation();');
         multiFunctionElement.setAttribute('onclick',"event.preventDefault();event.stopImmediatePropagation();");    
@@ -430,6 +415,7 @@ function prepareDropdownOption(dropdown, opt, index) {
 
 }
 
+// Determine the dropdown width based on field attributes selected
 function getDropdownWidth() {
     var dropdownWidth = 800;
     if (!enableDataTypeAttribute)

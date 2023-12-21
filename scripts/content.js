@@ -4,14 +4,6 @@
 *
 */
 
-// Inject script into the main page
-var s = document.createElement('script');
-s.src = chrome.runtime.getURL('scripts/ns_ss_fieldfilter.js');
-s.onload = function() {
-    this.remove();
-};
-(document.head || document.documentElement).appendChild(s);
-
 // Define default settings if not found in storage
 const defaultSettings = {
     enabled: true,
@@ -39,3 +31,11 @@ chrome.storage.local.get(['settings']).then((storage) => {
      // Inject settings into DOM so that field finder script knows how to configure settings
     (document.head || document.documentElement).appendChild(ffSettingsElement);
 });
+
+// Inject script into the main page
+var s = document.createElement('script');
+s.src = chrome.runtime.getURL('scripts/ns_ss_fieldfilter.js');
+s.onload = function() {
+    this.remove();
+};
+(document.head || document.documentElement).appendChild(s);

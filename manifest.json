@@ -5,12 +5,8 @@
   "description": "Allows user to quickly find fields in Saved Search and Workflows. Also provides additional details about fields in dropdown.",
   "content_scripts": [
       {
-        "css": [
-          "css/ns_ss_fieldfilter.css"
-        ],
-        "js": [
-          "scripts/content.js"
-        ],
+        "css": ["css/ns_ss_fieldfilter.css"],
+        "js": ["scripts/content.js"],
         "matches": [
           "https://*.app.netsuite.com/app/common/search/*",
           "https://*.app.netsuite.com/app/common/workflow/setup/*"
