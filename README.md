@@ -7,6 +7,15 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.23
+- Added capability for user to expand related table fields within the same dropdown window
+- Added extension popup that allows user to turn on/off extension, enable/disable features, and show/hide certain field attributes.
+- Added better error-handling that will automatically revert dropdown back to NetSuite default in the event an error loading Field Finder.
+- Automatically resize dropdown window based on field attributes chosen.
+- Added Chrome storage permission to store user settings.
+- Modified the way that Field Finder is loaded so that it relies on NetSuite API to determine when form is fully loaded.
+- Added new icon for extension
+
 ### 0.22
 - Change autocomplete tag value from false to off.
 

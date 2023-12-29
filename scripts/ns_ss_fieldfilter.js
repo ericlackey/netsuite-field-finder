@@ -35,8 +35,26 @@ const dropdownsIncluded = [
     "sort1",
     "sort2",
     "sort3",
-    "field"
+    "field",
+    "dffield",
+    "fffilter"
 ];
+
+const machinesThatSupportMultiSelect = [
+    "returnfields",
+    "filterfields",
+    "detailfields"
+];
+
+// Map of machine name to ID of field that contains field info
+const relatedTableDataIds = {
+    "filters": "fffilter",
+    "returnfields": "rffield",
+    "summaryfilters": "filterfilter",
+    "detailfields": "dffield",
+    "filterfields": "fffilter",
+    "field": "field"
+};
 
 NS.event.once(
     NS.event.type.FORM_INITED,
@@ -68,13 +86,17 @@ function initializeFieldFinder() {
         enableMultiEditOption = NS.Core.getURLParameter('ifrmcntnr') ? false : true;
 
     if (enableMultiEditOption) {
-        if (machines?.returnfields?.postBuildTableListeners) {
-            machines.returnfields.postBuildTableListeners.push(refreshMutliEditIcons);
-            machines.returnfields.buildtable();
-            multiEditOptionReady = true;
-        } else {
-            console.warn('Return fields machine not available: ' + err);
-        }
+        for (const machineName in machines) {
+            if (machinesThatSupportMultiSelect.includes(machineName)) {
+                let m = machines[machineName];
+                if (m.postBuildTableListeners) {
+                    m.postBuildTableListeners.push(function() { refreshMutliEditIcons(m); });
+                    m.buildtable();
+                    console.log(m);
+                }
+            }
+        };
+        multiEditOptionReady = true;
     }
 
     // Disable multi edit option on popup windows
@@ -99,8 +121,6 @@ function resetFieldFinder(dropdown) {
     dropdown.fieldFinder.buttons.forEach((button) => {
         button.classList.remove('ff_btn_enabled');
     });
-    dropdown.fieldFinder.customBodyFields = false;
-    dropdown.fieldFinder.customColumnFields = false;
     dropdown.fieldFinder.customFields = false;
     dropdown.fieldFinder.relatedTableFields = false;
     dropdown.fieldFinder.standardFields = false;
@@ -262,7 +282,6 @@ function addFieldFinderFilterElements(dropdown) {
     searchTextInput.setAttribute('onclick','event.preventDefault();this.select()');
     searchTextInput.setAttribute('autocomplete','off');
 
-    dropdown.fieldFinder = {};
     dropdown.fieldFinder.searchInputField = fieldFilter.appendChild(searchTextInput);
 
     const buttonGroup = document.createElement('div');
@@ -274,24 +293,18 @@ function addFieldFinderFilterElements(dropdown) {
     dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(dropdown, 'standardFields', 'Standard')));
 
     // Determine what type of fields we have available so we only show filters for those types
-    const customBodyFields = dropdown.valueArray.find(el => el.match(/^(custbody)/i)) ? true : false;
-    const customColumnFields = dropdown.valueArray.find(el => el.match(/^(custcol)/i)) ? true : false;
-    const customFields = dropdown.valueArray.find(el => el.match(/^(custitem|custrecord|custentity)/i)) ? true : false;
+    const customFields = dropdown.valueArray.find(el => el.match(/^(custitem|custrecord|custentity|custbody|custcol)/i)) ? true : false;
     const relatedTableFields = dropdown.textArray.find(el => el.match(/\.\.\.$/i)) ? true : false;
 
-    if (customFields || customColumnFields || customBodyFields) {
+    if (customFields)
         dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(dropdown, 'customFields', 'Custom')));
-    }
 
-    if (relatedTableFields) {
+    if (relatedTableFields)
         dropdown.fieldFinder.buttons.push(buttonGroup.appendChild(createFilterButton(dropdown, 'relatedTableFields', 'Related')));
-    }
 
     fieldFilter.appendChild(buttonGroup);
 
     dropdown.fieldFinder.standardFields = false;
-    dropdown.fieldFinder.customBodyFields = false;
-    dropdown.fieldFinder.customColumnFields = false;
     dropdown.fieldFinder.customFields = false;
     dropdown.fieldFinder.relatedTableFields = false;
 
@@ -385,8 +398,8 @@ function prepareDropdownOption(dropdown, opt, index) {
     multiFunctionElement.classList.add('ff_quickaction');
     multiFunctionElement.style.setProperty('text-align','center');
 
-    if (dropdown.name == 'rffield'
-        && enableMultiEditOption
+    if (enableMultiEditOption
+        && dropdown.fieldFinder.multiSelect
         && fieldId != ""
         && fieldType != 'Related Fields') {
         multiFunctionElement.classList.add('ff_multiedit');
@@ -407,9 +420,13 @@ function prepareDropdownOption(dropdown, opt, index) {
 
     opt.appendChild(multiFunctionElement);
     opt.appendChild(fieldNameElement);
-    opt.appendChild(fieldIdElement);
-    opt.appendChild(fieldTypeElement);
-    opt.appendChild(fieldDataTypeElement);
+
+    if (enableFieldIdAttribute)
+        opt.appendChild(fieldIdElement);
+    if (enableFieldTypeAttribute)
+        opt.appendChild(fieldTypeElement);
+    if (enableDataTypeAttribute)
+        opt.appendChild(fieldDataTypeElement);
 
     return true;
 
@@ -424,7 +441,7 @@ function getDropdownWidth() {
         dropdownWidth = dropdownWidth-fieldAttributeWidths.FIELD_TYPE_WIDTH;
     if (!enableFieldIdAttribute)
         dropdownWidth = dropdownWidth-fieldAttributeWidths.FIELD_ID_WIDTH;
-    dropdownWidth < 400 ? 400 : dropdownWidth; // Minimum width is 400
+    dropdownWidth = (dropdownWidth < 400) ? 400 : dropdownWidth; // Minimum width is 450
     return dropdownWidth;
 }
 
@@ -436,7 +453,11 @@ function prepareDropdown(dropdown) {
         if (!dropdown.div) {
             dropdown.buildDiv();
         }
-    
+
+        if (!dropdown.fieldFinder) {
+            dropdown.fieldFinder = {};
+        }
+
         const dropdownWidth = getDropdownWidth();
 
         // Increase width of the options element
@@ -456,6 +477,10 @@ function prepareDropdown(dropdown) {
         // Add event listener to handle when user clicks on field selector arrow
         document.getElementById(`${dropdown.inpt.id}_arrow`)?.addEventListener('click',handleFieldSelectorClick);
 
+        if (machinesThatSupportMultiSelect.includes(dropdown.hddn?.machine?.name)) {
+            dropdown.fieldFinder.multiSelect = true;
+        }
+
         // Prepare each option in the dropdown list
         dropdown.div.childNodes.forEach((opt, index) => prepareDropdownOption(dropdown, opt, index));
 
@@ -465,7 +490,7 @@ function prepareDropdown(dropdown) {
         // Add the Field Finder footer element to the dropdown
         addFieldFinderFooterElement(dropdown);
 
-        if (dropdown.name == 'rffield' && multiEditOptionReady) {
+        if (multiEditOptionReady && dropdown.fieldFinder.multiSelect) {
             refreshMutliEditIcons();
         }
 
@@ -507,8 +532,6 @@ function filterDropdowns (dropdown) {
         return;
     }
 
-    const showCustomBodyFields = dropdown.fieldFinder.customBodyFields;
-    const showCustomColumnFields = dropdown.fieldFinder.customColumnFields;
     const showCustomFields = dropdown.fieldFinder.customFields;
     const showRelatedTableFields = dropdown.fieldFinder.relatedTableFields;
     const showStandardFields = dropdown.fieldFinder.standardFields;
@@ -518,9 +541,7 @@ function filterDropdowns (dropdown) {
     let fieldsTotal = 0;
     let filterByFieldType = false;
 
-    if (showCustomBodyFields ||
-        showCustomColumnFields ||
-        showCustomFields ||
+    if (showCustomFields ||
         showRelatedTableFields ||
         showStandardFields) {
         filterByFieldType = true;
@@ -557,7 +578,7 @@ function filterDropdowns (dropdown) {
 
         if (opt.style.getPropertyValue('display') == 'block'
             && opt.getAttribute('ff_fieldname').search(searchRegex)==-1
-            && opt.getAttribute('ff_fieldid').search(searchRegex)==-1) {
+            && (!enableFieldIdAttribute || opt.getAttribute('ff_fieldid').search(searchRegex)==-1)) {
             opt.style.setProperty('display','none');
         }
 
@@ -566,13 +587,16 @@ function filterDropdowns (dropdown) {
                 const newFieldNameHTML = opt.getAttribute('ff_fieldname').replace(searchRegex, '<mark class="highlight">$&</mark>');
                 opt.children[1].innerHTML = newFieldNameHTML;
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
-                    const newFieldIdHTML = prettifyFieldId(opt.getAttribute('ff_fieldid').toLowerCase()).replace(searchRegex, '<mark class="highlight">$&</mark>');
-                    opt.children[2].innerHTML = newFieldIdHTML;
+                    if (enableFieldIdAttribute) {
+                        const newFieldIdHTML = prettifyFieldId(opt.getAttribute('ff_fieldid').toLowerCase()).replace(searchRegex, '<mark class="highlight">$&</mark>');
+                        opt.children[2].innerHTML = newFieldIdHTML;
+                    }
                 }
             } else {
                 opt.children[1].innerHTML = opt.getAttribute('ff_fieldname');
                 if (opt.getAttribute('ff_fieldtype') != 'Related Fields') {
-                    opt.children[2].innerHTML = prettifyFieldId(opt.getAttribute('ff_fieldid').toLowerCase());
+                    if (enableFieldIdAttribute)
+                        opt.children[2].innerHTML = prettifyFieldId(opt.getAttribute('ff_fieldid').toLowerCase());
                 }
             }
         }
@@ -594,10 +618,10 @@ function filterDropdowns (dropdown) {
 }
 
 // Refresh multi-field edit icons on dropdown to reflect current search fields
-function refreshMutliEditIcons() {
+function refreshMutliEditIcons(machine) {
 
     // First, reset all multiedit icons back to default
-    const dropdown = returnfields_machine?.layoutdd;
+    const dropdown = machine?.layoutdd;
 
     if (!dropdown?.div)
         return;
@@ -605,7 +629,7 @@ function refreshMutliEditIcons() {
     if (!dropdown.fieldFinder)
         return;
 
-    const selectedFieldsArray = returnfields_machine.dataManager.getLineArray().map((x)=>{return x[0];});
+    const selectedFieldsArray = machine.dataManager.getLineArray().map((x)=>{return x[0];});
 
     // Find all fields currently selected
     const collection = dropdown.div.getElementsByClassName("ff_multiedit_selected");
@@ -636,22 +660,34 @@ function handleMultiEditClick(fieldId) {
 
     try {
 
+        const machine = currentDropdown.hddn?.machine;
+
+        if (!machine) {
+            console.warn(`Could not find machine ${machine} so ignoring click`);
+        }
+
+        const fieldToSearch = {
+            "detailfields": "dffield",
+            "returnfields": "rffield",
+            "filterfields": "field"
+        };
+
         // Determine if field has already been added to return lines.
-        const indexOfField = returnfields_machine.dataManager.findFieldValueLineNum('rffield',fieldId);
+        const indexOfField = machine.dataManager.findFieldValueLineNum(fieldToSearch[machine.name],fieldId);
 
         // If it has not, add it. Otherwise, delete it.
         if (indexOfField == -1) {
-            returnfields_machine.insertLine([fieldId,'','','','','',''],returnfields_machine.getLineCount()+1);
-            returnfields_machine.incrementIndex();
-            returnfields_machine.setMachineIndex(returnfields_machine.getLineCount()+1);
+            machine.insertLine([fieldId,'','','','','',''],machine.getLineCount()+1);
+            machine.incrementIndex();
+            machine.setMachineIndex(machine.getLineCount()+1);
         }
         else {
-            returnfields_machine.deleteline(indexOfField, true);
-            returnfields_machine.setMachineIndex(returnfields_machine.getLineCount()+1); // Set focus on last line
-            returnfields_machine.clearline(); // Set focus on last line
+            machine.deleteline(indexOfField, true);
+            machine.setMachineIndex(machine.getLineCount()+1); // Set focus on last line
+            machine.clearline(); // Set focus on last line
         }
 
-        returnfields_machine.buildtable(); // Rebuild the results table
+        machine.buildtable(); // Rebuild the results table
     }
     catch (err) {
         console.error(`An error occured while perfoming multi edit action: ${err}`);
@@ -659,6 +695,7 @@ function handleMultiEditClick(fieldId) {
 
 }
 
+// Craft the URL needed to retrieve related table fields
 function getRelatedTableUrl(tableId) {
     let url = "";
     const machineName = currentDropdown.hddn?.machine?.name || currentDropdown.name;
@@ -675,6 +712,12 @@ function getRelatedTableUrl(tableId) {
         case "field":
             url = `/app/common/search/search.nl?formulajoin=${tableId}&filterformula=T&field=formula&useids=F&searchtype=${ffSearchType}&ifrmcntnr=T&rectype=${ffRecType}`;
             break;
+        case "detailfields":
+            url = `/app/common/search/search.nl?resultjoin=${tableId}&sel=dffield&mach=detailfields&searchtype=${ffSearchType}&ifrmcntnr=T&rectype=${ffRecType}`;
+            break;
+        case "filterfields":
+            url = `/app/common/search/search.nl?ffjoin=${tableId}&searchtype=${ffSearchType}&rectype=${ffRecType}&ifrmcntnr=T`;
+
     }
     return url;
 }
@@ -683,6 +726,7 @@ function getRelatedTableUrl(tableId) {
 async function handleRelatedTableClick(tableId) {
 
     const machineName = currentDropdown.hddn?.machine?.name || currentDropdown.name;
+    var dataFields, joinLabel;
 
     if (relatedTablesAdded.includes(`${machineName}_${tableId}`)) {
         return; // Ignore if we have already added this table
@@ -698,37 +742,39 @@ async function handleRelatedTableClick(tableId) {
     }
 
     // Retrieve the related field table
-    const response = await fetch(relatedTableUrl);
-    const movies = await response.text();
+    try {
 
-    // Parse returned HTML
-    const domParser = new DOMParser();
-    const doc = domParser.parseFromString(movies, "text/html");
+        const httpResponse = await fetch(relatedTableUrl);
 
-    // Map of machine name to ID of field that contains field info
-    const relatedTableDataIds = {
-        "filters": "fffilter",
-        "returnfields": "rffield",
-        "summaryfilters": "filterfilter",
-        "field": "field"
-    };
+        if (httpResponse.status != 200)
+            throw new Error('HTTP error while retrieving related fields.');
 
-    // Grab related field data
-    const dataOptions = JSON.parse(doc.querySelector(`div[data-name='${relatedTableDataIds[machineName]}']`).getAttribute("data-options"));
+        const htmlText = await httpResponse.text();
 
-    // Grab the join label
-    const joinLabel = doc.querySelector("input[id='joinlabel']").value;
+        // Parse returned HTML
+        const parsedHTMLDoc = new DOMParser().parseFromString(htmlText, "text/html");
+
+        // Grab related field data
+        dataFields = JSON.parse(parsedHTMLDoc.querySelector(`div[data-name='${relatedTableDataIds[machineName]}']`).getAttribute("data-options"));
+
+        // Grab the join label
+        joinLabel = parsedHTMLDoc.querySelector("input[id='joinlabel']").value;
+
+    } catch (err) {
+        console.warn(`Ignoring request to expand related table due to error ${err}.`);
+        return;
+    }
 
     // Close the current dropdown
     currentDropdown.close();
 
     // Add all of the related fields to the current active dropdown
-    for (let option of dataOptions) {
-        if (option.value == '')
+    for (let field of dataFields) {
+        if (field.value == '')
             continue;
-        const x = currentDropdown.addOption(`${joinLabel} : ${option.text}`,option.value,selectedIndex+1);
+        const x = currentDropdown.addOption(`${joinLabel} : ${field.text}`,field.value,selectedIndex+1);
         try {
-            setRfType(option.value,'');
+            setRfType(field.value,'');
         } catch(err) {}
     }
 
