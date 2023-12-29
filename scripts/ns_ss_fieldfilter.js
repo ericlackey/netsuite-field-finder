@@ -56,6 +56,7 @@ const relatedTableDataIds = {
     "field": "field"
 };
 
+// Initialize field finder once form is fully loaded by NetSuite
 NS.event.once(
     NS.event.type.FORM_INITED,
     initializeFieldFinder
@@ -92,14 +93,13 @@ function initializeFieldFinder() {
                 if (m.postBuildTableListeners) {
                     m.postBuildTableListeners.push(function() { refreshMutliEditIcons(m); });
                     m.buildtable();
-                    console.log(m);
                 }
             }
         };
         multiEditOptionReady = true;
     }
 
-    // Disable multi edit option on popup windows
+    // Store search type and rec type
     ffSearchType = document.getElementById("searchtype")?.value || NS.Core.getURLParameter('searchtype');
     ffRecType = document.getElementById("rectype")?.value  || NS.Core.getURLParameter('rectype') || -1;
 
