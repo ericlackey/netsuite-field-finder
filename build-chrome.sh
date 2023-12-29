@@ -4,6 +4,7 @@ echo "Building Chrome version $1"
 mkdir -p versions/fieldfinder_0_$1/chrome/build
 cp -r css versions/fieldfinder_0_$1/chrome/build
 cp -r scripts versions/fieldfinder_0_$1/chrome/build
+cp -r bootstrap versions/fieldfinder_0_$1/chrome/build
 cp popup.html versions/fieldfinder_0_$1/chrome/build
 cp icon128.png versions/fieldfinder_0_$1/chrome/build
 cp manifest_chrome.json versions/fieldfinder_0_$1/chrome/build/manifest.json
