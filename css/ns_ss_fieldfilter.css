@@ -11,7 +11,7 @@
     text-overflow: ellipsis;
 }
 
-.ff_multiedit {
+.ff_quickaction {
   margin: 0px;
   padding: 0px;
 }
@@ -22,6 +22,14 @@
 
 .ff_multiedit_selected::before {
   content: "\2705";
+}
+
+.ff_expandrelated::before {
+  content: "\25BA";
+}
+
+.ff_expandrelated_added::before {
+  content: "\25BC";
 }
 
 .ff_div {
@@ -62,7 +70,7 @@
   padding: 2px 4px; /* Some padding */
   cursor: pointer; /* Pointer/hand icon */
   float: left; /* Float the buttons side by side */
-  width: 100px;
+  width: 60px;
   font-size: 12px;
 }
 
