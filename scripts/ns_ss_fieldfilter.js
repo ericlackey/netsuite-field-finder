@@ -331,8 +331,8 @@ function addFieldFinderFooterElement(dropdown) {
     
     const anchorElement = document.createElement('a');
     anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-    anchorElement.title='NetSuite Field Finder 0.23';
-    anchorElement.textContent='NetSuite Field Finder 0.23';
+    anchorElement.title='NetSuite Field Finder 0.24';
+    anchorElement.textContent='NetSuite Field Finder 0.24';
     anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
     anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
     anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -345,8 +345,10 @@ function addFieldFinderFooterElement(dropdown) {
 }
 
 function prettifyFieldId(fieldId) {
-    const regex = new RegExp(`(stdentity|stdbody|custom_|transaction_|${ffSearchType.toLowerCase()}_)`);
-    return fieldId.toLowerCase().replace(regex,'');
+    var prefixes = ['stdentity','stdbody','custom_','transaction_'];
+    if (ffSearchType)
+        prefixes.push(`${ffSearchType.toLowerCase()}_`);
+    return fieldId.toLowerCase().replace(new RegExp(`(${prefixes.join("|")})`),'');
 }
 
 // Prepare Dropdown option
