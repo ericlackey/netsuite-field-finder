@@ -7,6 +7,9 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.24
+- Fixed issue that caused a problem with dropdowns in Workflow editor
+
 ### 0.23
 - Added capability for user to expand related table fields within the same dropdown window
 - Added extension popup that allows user to turn on/off extension, enable/disable features, and show/hide certain field attributes.
