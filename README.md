@@ -7,6 +7,11 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.25
+- Migrating Firefox extension to manifest v3.
+- Removing build scripts no longer needed for Firefox.
+- Changed initializing call to determine if NS form is already loaded. For some reason, Firefox loads the form quicker than Chrome causing the event handler to be setup after the Form Inited event has already fired.
+
 ### 0.24
 - Fixed issue that caused a problem with dropdowns in Workflow editor
 

@@ -57,10 +57,13 @@ const relatedTableDataIds = {
 };
 
 // Initialize field finder once form is fully loaded by NetSuite
-NS.event.once(
-    NS.event.type.FORM_INITED,
-    initializeFieldFinder
-);
+if (NS.form.isInited())
+    initializeFieldFinder();
+else
+    NS.event.once(
+        NS.event.type.FORM_INITED,
+        initializeFieldFinder
+    );
 
 function initializeFieldFinder() {
 
