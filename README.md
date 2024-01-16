@@ -7,6 +7,10 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.26
+- Migrate to Typescript
+- Add unit tests
+
 ### 0.25
 - Migrating Firefox extension to manifest v3.
 - Removing build scripts no longer needed for Firefox.
