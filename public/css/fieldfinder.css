@@ -11,24 +11,27 @@
     text-overflow: ellipsis;
 }
 
-.ff_quickaction {
+.ff_multiedit::before {
   margin: 0px;
   padding: 0px;
-}
-
-.ff_multiedit::before {
   content: "\26F6";
 }
 
 .ff_multiedit_selected::before {
+  margin: 0px;
+  padding: 0px;
   content: "\2705";
 }
 
 .ff_expandrelated::before {
+  margin: 0px;
+  padding: 0px;
   content: "\25BA";
 }
 
 .ff_expandrelated_added::before {
+  margin: 0px;
+  padding: 0px;
   content: "\25BC";
 }
 
