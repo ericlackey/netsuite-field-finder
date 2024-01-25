@@ -9,9 +9,15 @@
 declare var NS:any;
 declare var machines:any;
 declare var dropdowns:any;
-declare var currentDropdown:any;
 declare var rfTypes:any;
-declare var setRfType:Function;
+declare var ffTypes:any;
+declare var setFfType:Function;
+declare var nlapiSetFieldValue:Function;
+
+declare var fieldFinderVersion:string;
+
+// TODO: Add this back after release of 0.26
+//let acorn = require("acorn");
 
 // FieldFinder variables
 var ffSettings: FieldFinderSettings;
@@ -64,6 +70,8 @@ export const relatedTableDataIds:any = {
 };
 
 // Initialize field finder once form is fully loaded by NetSuite
+
+
 if (typeof NS != 'undefined') {
     if (NS.form.isInited())
         initializeFieldFinder();
@@ -76,6 +84,8 @@ if (typeof NS != 'undefined') {
 
 export function initializeFieldFinder() {
 
+    const startTime = performance.now();
+
     try {
         const settingsElement = document.getElementById('field-finder-settings') as HTMLInputElement;
         ffSettings = JSON.parse(settingsElement.getAttribute('data-options') || '') as FieldFinderSettings;
@@ -84,12 +94,8 @@ export function initializeFieldFinder() {
         return;
     }
 
-    if (ffSettings.enabled == false) {
-        console.log('it is disabled!');
+    if (ffSettings.enabled == false)
         return;
-    }
-
-    console.log(ffSettings);
 
     // Do not enable multi-edit option on a popup
     if (ffSettings.features.multiSelect)
@@ -100,7 +106,6 @@ export function initializeFieldFinder() {
             if (machinesThatSupportMultiSelect.includes(machineName)) {
                 let m = machines[machineName];
                 if (m.postBuildTableListeners) {
-                    console.log(`adding handler on machine ${m.name}`);
                     m.postBuildTableListeners.push(function() { handleFieldUpdate(m); });
                     m.buildtable();
                 }
@@ -112,14 +117,10 @@ export function initializeFieldFinder() {
     ffSearchType = (document.getElementById("searchtype") as HTMLInputElement)?.value || NS.Core.getURLParameter('searchtype');
     ffRecType = (document.getElementById("rectype") as HTMLInputElement)?.value  || NS.Core.getURLParameter('rectype') || -1;
 
-    console.log('we are still going');
-
     if (typeof dropdowns != undefined) {
         for (let key in dropdowns) {
-            if (dropdownsIncluded.includes(dropdowns[key].name)) {
+            if (dropdownsIncluded.includes(dropdowns[key].name))
                 dropdowns[key].fieldFinder = new FieldFinderDropdown(dropdowns[key], ffSearchType, ffRecType, ffSettings);
-            }
-            console.log(dropdowns[key]);
         }
     }
 
@@ -183,13 +184,16 @@ export class FieldFinderDropdown {
     fieldFinderElement = document.createElement('div');
     footer = document.createElement('div');
     relatedTablesAdded: String[] = [];
-    buttons = [] as HTMLButtonElement[];
     settings: FieldFinderSettings;
     options = [] as FieldFinderDropdownOption[]
     selectedOptions = [] as FieldFinderDropdownOption[];
     customOptions: FieldFinderDropdownOption[] = [];
     standardOptions: FieldFinderDropdownOption[] = [];
     relatedOptions: FieldFinderDropdownOption[] = [];
+    hasRelatedTableFields = false;
+    hasCustomFields = false;
+    buttons: FieldFinderButtons = {};
+    hasMachine = false;
 
     constructor(nsDropdown:any, searchType: string, recType: number, settings: FieldFinderSettings) {
         this.nsDropdown = nsDropdown;
@@ -201,6 +205,8 @@ export class FieldFinderDropdown {
     }
 
     init() {
+        if (machinesThatSupportMultiSelect.includes(this.nsDropdown.hddn?.machine?.name))
+            this.hasMachine = true;
         if (!this.nsDropdown.div)
             this.nsDropdown.buildDiv();
         this.setDropdownWidth();
@@ -210,10 +216,11 @@ export class FieldFinderDropdown {
         this.addFieldFinderFilterElements();
         this.addFieldFinderFooterElement();
         this.configureAutoFocusOnTextBox();
+
     }
 
     enableMultiSelectIfAvailable() {
-        if (machinesThatSupportMultiSelect.includes(this.nsDropdown.hddn?.machine?.name))
+        if (this.hasMachine)
             this.multiSelect = true;
     }
 
@@ -222,10 +229,14 @@ export class FieldFinderDropdown {
         this.nsDropdown.valueArray.forEach((fieldId:number, index:number) => {
             let newOpt = new FieldFinderDropdownOption(this,index);
             this.options.push(newOpt);
-            if (newOpt.fieldType == FieldType.CUSTOM || newOpt.fieldType == FieldType.CUSTOM_BODY || newOpt.fieldType == FieldType.CUSTOM_COLUMN)
+            if (newOpt.fieldType == FieldType.CUSTOM || newOpt.fieldType == FieldType.CUSTOM_BODY || newOpt.fieldType == FieldType.CUSTOM_COLUMN) {
                 this.customOptions.push(newOpt);
-            else if (newOpt.fieldType == FieldType.RELATED)
+                this.hasCustomFields = true;
+            }
+            else if (newOpt.fieldType == FieldType.RELATED) {
                 this.relatedOptions.push(newOpt);
+                this.hasRelatedTableFields = true;
+            }
             else
                 this.standardOptions.push(newOpt);
             return true;
@@ -293,20 +304,11 @@ export class FieldFinderDropdown {
         buttonGroup.setAttribute('class','ff_btn_group');
         buttonGroup.setAttribute('id','ff_btn_group');
         buttonGroup.style.setProperty('padding-left','20px');
-        const standardFieldsButton = this.createFilterButton('standardFields', 'Standard');
-        buttonGroup.appendChild(standardFieldsButton)
-        this.buttons.push(standardFieldsButton);
-
-        // Determine what type of fields we have available so we only show filters for those types
-        const customFields = this.nsDropdown.valueArray.find((el:String) => el.match(/^(custitem|custrecord|custentity|custbody|custcol)/i)) ? true : false;
-        const relatedTableFields = this.nsDropdown.textArray.find((el:String) => el.match(/\.\.\.$/i)) ? true : false;
-
-        if (customFields)
-            this.buttons.push(buttonGroup.appendChild(this.createFilterButton('customFields', 'Custom')));
-
-        if (relatedTableFields)
-            this.buttons.push(buttonGroup.appendChild(this.createFilterButton('relatedTableFields', 'Related')));
-
+        this.buttons.standard = buttonGroup.appendChild(this.createFilterButton('standardFields', 'Standard'));
+        if (this.hasCustomFields)
+            this.buttons.custom = buttonGroup.appendChild(this.createFilterButton('customFields', 'Custom'));
+        if (this.hasRelatedTableFields)
+            this.buttons.related = buttonGroup.appendChild(this.createFilterButton('relatedTableFields', 'Related'));
         this.fieldFinderElement.appendChild(buttonGroup);
     }
 
@@ -358,8 +360,8 @@ export class FieldFinderDropdown {
         titleElement.textContent = '';
         
         anchorElement.href = "https://chrome.google.com/webstore/detail/netsuite-field-finder/npehdolgmmdncpmkoploaeljhkngjbne?hl=en-US&authuser=0";
-        anchorElement.title='NetSuite Field Finder 0.25';
-        anchorElement.textContent='NetSuite Field Finder 0.25';
+        anchorElement.title=`NetSuite Field Finder ${fieldFinderVersion}`;
+        anchorElement.textContent=`NetSuite Field Finder ${fieldFinderVersion}`;
         anchorElement.setAttribute('onpointerdown',`event.preventDefault();event.stopImmediatePropagation();window.open('${anchorElement.href}','_blank');`);
         anchorElement.setAttribute('onmousedown','event.preventDefault();event.stopImmediatePropagation();');
         anchorElement.setAttribute('onclick','event.preventDefault();event.stopImmediatePropagation();');
@@ -409,9 +411,9 @@ export class FieldFinderDropdown {
     
     reset() {
         this.searchInputField.value = '';
-        this.buttons.forEach((button:HTMLElement) => {
-            button.classList.remove('ff_btn_enabled');
-        });
+        this.buttons.custom?.classList.remove('ff_btn_enabled');
+        this.buttons.related?.classList.remove('ff_btn_enabled');
+        this.buttons.standard?.classList.remove('ff_btn_enabled');
         this.fieldTypeStatus.customFields = false;
         this.fieldTypeStatus.relatedTableFields = false;
         this.fieldTypeStatus.standardFields = false;
@@ -463,8 +465,51 @@ export class FieldFinderDropdown {
         return urls[machineName as keyof RelatedTableUrls];
     }
     
-    async getRelatedTableFields(tableId: string) {
-        var joinLabel:string, dataFields:any;
+    
+    // TODO: Add this back after release of 0.26
+    /*
+    async getRelatedTableFieldTypes(parsedHTMLDoc:Document) {
+        const scriptTag = parsedHTMLDoc.querySelector(`script[src^='/app/common/search/search.nl__ifrmcntnr']`) as HTMLScriptElement;
+        const httpResponse = await fetch(scriptTag.src);
+        const htmlText = await httpResponse.text();  
+        const parsedJs = acorn.parse(htmlText,{ecmaVersion: 11});
+        for (let stmt of parsedJs.body) {
+            let expr = stmt.expression;
+            let fieldId = '';
+            let fieldType = '';
+            let fieldGroupType = '';
+            if (expr && expr.type == 'AssignmentExpression'
+                && expr.left.type == 'MemberExpression'
+                && expr.left?.object?.name =='ffjTypes'
+                && expr.right?.type=='Literal') {
+                fieldId = expr.left.property.value;
+                fieldType = expr.right.value;
+                setFfType(fieldId,fieldType);
+            }
+        }
+    }
+    */
+
+    getRelatedTableLabelName(parsedHTMLDoc:Document) {
+        const joinLabelElement =  parsedHTMLDoc.querySelector("input[id='joinlabel']") as HTMLInputElement;
+        return joinLabelElement.value;
+    }
+
+    getRelatedTableFields(parsedHTMLDoc:Document) {
+        const machineName = this.nsDropdown.hddn?.machine?.name || this.nsDropdown.name;
+        const dataFieldName = relatedTableDataIds[machineName];
+        const dataFieldsElement = parsedHTMLDoc.querySelector(`div[data-name='${dataFieldName}']`) as HTMLDivElement;
+        // TODO: Add this back after release of 0.26
+        /*if (machineName == 'filterfields') {
+            this.getRelatedTableFieldTypes(parsedHTMLDoc)
+            .catch((error) => {
+                console.error(`An error occurred while loading field types of related fields: ${error}`);
+            });
+        }*/
+        return JSON.parse(dataFieldsElement.getAttribute("data-options") || '');
+    }
+
+    async getRelatedTableDetails(tableId: string) {
         const machineName = this.nsDropdown.hddn?.machine?.name || this.nsDropdown.name;
         const url = this.relatedTableUrl(machineName,tableId.replace(/^\_/,''));
         const httpResponse = await fetch(url);
@@ -472,31 +517,25 @@ export class FieldFinderDropdown {
             throw new Error(`HTTP error while retrieving related fields.`);
         const htmlText = await httpResponse.text();
         const parsedHTMLDoc = new DOMParser().parseFromString(htmlText, "text/html") || "";
-        const dataFieldName = relatedTableDataIds[machineName];
-        const dataFieldsElement = parsedHTMLDoc.querySelector(`div[data-name='${dataFieldName}']`) as HTMLDivElement;
-        dataFields = JSON.parse(dataFieldsElement.getAttribute("data-options") || '');
-        const joinLabelElement =  parsedHTMLDoc.querySelector("input[id='joinlabel']") as HTMLInputElement;
-        joinLabel = joinLabelElement.value;
-        return [dataFields, joinLabel];
+        return {
+            fields: this.getRelatedTableFields(parsedHTMLDoc), 
+            labelName: this.getRelatedTableLabelName(parsedHTMLDoc)
+        };
     }
     
     async addRelatedTableFields(tableId: string) {
-        var joinLabel:string;
-        var dataFields:any;
+        var relatedTableDetails:any;
         const machineName = this.nsDropdown.hddn?.machine?.name || this.nsDropdown.name;
         if (this.relatedTablesAdded.includes(`${machineName}_${tableId}`)) {
-            console.log('returning false because already added');
             return false; // Ignore if we have already added this table
 
         }
         const selectedIndex = this.nsDropdown.getIndexForValue(tableId); // Get index where user clicked
         if (!selectedIndex) {
-            console.log('returning false because could not find table');
-
             return false;
         }
         try {
-            [dataFields, joinLabel] = await this.getRelatedTableFields(tableId);
+            relatedTableDetails = await this.getRelatedTableDetails(tableId);
         } catch (err) {
             console.error(`An error occurred while trying to retrieve related fields: ${err}`);
             return false;
@@ -506,15 +545,11 @@ export class FieldFinderDropdown {
         this.nsDropdown.close();
 
         // Add all of the related fields to the current active dropdown
-        for (let field of dataFields) {
+        for (let field of relatedTableDetails.fields) {
             if (field.value == '')
                 continue;
-            const x = this.nsDropdown.addOption(`${joinLabel} : ${field.text}`,field.value,selectedIndex+1);
-            try {
-                setRfType(field.value,'');
-            } catch(err) {}
+            this.nsDropdown.addOption(`${relatedTableDetails.labelName} : ${field.text}`,field.value,selectedIndex+1);
         }
-
         this.relatedTablesAdded.push(`${machineName}_${tableId}`);
         this.nsDropdown.buildDiv(); // Rebuild the DIV now that we have added new fields
         this.softReload(); // Reloads Field finder
@@ -666,7 +701,21 @@ export class FieldFinderDropdownOption {
     addDataTypeElement() {
         this.dataTypeElement.classList.add('ff_option');
         this.dataTypeElement.style.setProperty('width',`${FieldAttributeWidths.dataType}px`);
-        this.dataTypeElement.textContent = this.fieldType == 'Related Fields' ? '' : typeof rfTypes == 'object' ? rfTypes[this.fieldId] : '';
+
+
+        if (this.dropdown.nsDropdown.name == 'fffilter' && typeof ffTypes == 'object') {
+            this.dataTypeElement.textContent = ffTypes[this.fieldId];
+        }
+        else if (this.dropdown.nsDropdown.name == 'filterfilter' && typeof ffTypes == 'object') {
+            this.dataTypeElement.textContent = ffTypes[this.fieldId];
+        }
+        else if (this.dropdown.nsDropdown.name == 'rffield' && typeof rfTypes == 'object') {
+            this.dataTypeElement.textContent = rfTypes[this.fieldId];
+        }
+        else {
+            this.dataTypeElement.textContent = '';
+        }
+
         this.dataTypeElement.style.visibility = this.dropdown.settings.attributes.dataType ? 'visible': 'hidden';
         this.element.appendChild(this.dataTypeElement);
     }

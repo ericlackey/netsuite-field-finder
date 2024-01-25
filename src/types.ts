@@ -1,3 +1,4 @@
+
 type FieldFinderSettings = {
     enabled: boolean;
     features: {
@@ -26,3 +27,8 @@ type RelatedTableUrls = {
     filterfields: string
 };
 
+type FieldFinderButtons = {
+    custom?: HTMLButtonElement;
+    related?: HTMLButtonElement;
+    standard?: HTMLButtonElement;
+};

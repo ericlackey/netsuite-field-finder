@@ -8,7 +8,7 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 ## Release Notes
 
 ### 0.26
-- Migrate to Typescript
+- Migrate codebase to Typescript
 - Add unit tests
 
 ### 0.25

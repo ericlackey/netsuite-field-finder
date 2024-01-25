@@ -1,4 +1,4 @@
-export const mockHtmlResponse = (dataFieldName:string) => `
+export const MockHtmlResponse = (dataFieldName:string) => `
 <html>
 <head></head>
 <body>
@@ -11,7 +11,7 @@ export const mockHtmlResponse = (dataFieldName:string) => `
 </html>
 `;
 
-export const mockHtmlResponse2 = (dataFieldName:string) => `
+export const MockHtmlResponse2 = (dataFieldName:string) => `
 <html>
 <head></head>
 <body>
@@ -72,9 +72,7 @@ export class MockNsMachine {
     incrementIndex() {
       this.index++;
     }
-
 };
-
 
 export class MockCurrentCell {
     constructor() {
@@ -164,67 +162,3 @@ type FieldDefinition = {
   fieldName: string
 }
 
-var mockStandardFields = [
-  {fieldId: 'stdentityfield', fieldName:'Standard Field Name'},
-  {fieldId: 'stdbodyfield', fieldName:'Standard Body Field Name'}
-];
-
-var mockCustomFields = [
-  {fieldId: 'custbody_amount', fieldName:'Custom Body Field Name'},
-  {fieldId: 'custcol_field', fieldName:'Custom Column Field Name'},
-  {fieldId: 'custrecord_field', fieldName:'Custom Record Field'},
-  {fieldId: 'custom_field', fieldName:'Custom Field Name'}
-];
-
-var mockRelatedFields = [
-  {fieldId: 'rel', fieldName:'Some Fields...'},
-  {fieldId: 'tbl', fieldName:'ome Other Fields...'}
-];
-
-const shuffleArray = (array:FieldDefinition[]) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-  return array;
-}
-
-export const mockReturnFieldsDropdown = () => {
-  let dropdown = new MockNSDropdown("rffield");
-  mockStandardFields = shuffleArray(mockStandardFields);
-  mockCustomFields = shuffleArray(mockCustomFields);
-  mockRelatedFields = shuffleArray(mockRelatedFields);
-  dropdown.addOption(mockStandardFields[0].fieldName,mockStandardFields[0].fieldId,0);
-  dropdown.addOption(mockStandardFields[1].fieldName,mockStandardFields[1].fieldId,1);
-  dropdown.addOption(mockCustomFields[0].fieldName,mockCustomFields[0].fieldId,2);
-  dropdown.addOption(mockCustomFields[1].fieldName,mockCustomFields[1].fieldId,3);
-  dropdown.addOption(mockCustomFields[2].fieldName,mockCustomFields[2].fieldId,4);
-  dropdown.addOption(mockCustomFields[3].fieldName,mockCustomFields[3].fieldId,5);
-  dropdown.addOption(mockRelatedFields[0].fieldName,mockRelatedFields[0].fieldId,6);
-  dropdown.addOption(mockRelatedFields[1].fieldName,mockRelatedFields[1].fieldId,7);
-  const machine = new MockNsMachine("returnfields");
-  machine.layoutdd = dropdown;
-  dropdown.hddn.machine = machine;
-  return dropdown;
-};
-
-export const mockFilterFieldsDropdown = () => {
-  let dropdown = new MockNSDropdown("filterfilter");
-  mockStandardFields = shuffleArray(mockStandardFields);
-  mockCustomFields = shuffleArray(mockCustomFields);
-  mockRelatedFields = shuffleArray(mockRelatedFields);
-  dropdown.addOption(mockStandardFields[0].fieldName,mockStandardFields[0].fieldId,0);
-  dropdown.addOption(mockStandardFields[1].fieldName,mockStandardFields[1].fieldId,1);
-  dropdown.addOption(mockCustomFields[0].fieldName,mockCustomFields[0].fieldId,2);
-  dropdown.addOption(mockCustomFields[1].fieldName,mockCustomFields[1].fieldId,3);
-  dropdown.addOption(mockCustomFields[2].fieldName,mockCustomFields[2].fieldId,4);
-  dropdown.addOption(mockCustomFields[3].fieldName,mockCustomFields[3].fieldId,5);
-  dropdown.addOption(mockRelatedFields[0].fieldName,mockRelatedFields[0].fieldId,6);
-  dropdown.addOption(mockRelatedFields[1].fieldName,mockRelatedFields[1].fieldId,7);
-  const machine = new MockNsMachine("filters");
-  machine.layoutdd = dropdown;
-  dropdown.hddn.machine = machine;
-  return dropdown;
-};
