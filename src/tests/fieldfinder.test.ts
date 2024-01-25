@@ -19,9 +19,11 @@ declare global {
   var NS: MockNSCore;
   var machines: any;
   var dropdowns: any;
+  var fieldFinderVersion: string;
 }
 
 global.NS = new MockNSCore();
+global.fieldFinderVersion = "0.01";
 
 /* Create FieldFinder config */
 const ffSettingsDefault:FieldFinderSettings = {
@@ -201,7 +203,6 @@ describe.each(testDropdowns)("Test Field Finder %s with features %s", (dropdownK
       fieldFinder = dropdowns[dropdownKey].fieldFinder;
     });
 
-    
     test("Number of field finder options matches dropdown options", () => {
       expect (fieldFinder.options.length).toBe(fieldFinder.nsDropdown.valueArray.length);
     });
@@ -478,6 +479,6 @@ describe.each(testDropdowns)("Test Field Finder %s with features %s", (dropdownK
         expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("800px");
       }
     });
-    
+
 });
 
