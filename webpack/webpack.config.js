@@ -48,7 +48,6 @@ module.exports = {
       new ZipPlugin({
          path: '../versions',
          filename: `fieldfinder_${pjson.version.replace('.','_')}.zip`,
-         pathPrefix: 'relative/path',
          fileOptions: {
            mtime: new Date(),
            mode: 0o100664,
