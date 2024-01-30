@@ -12,7 +12,8 @@ declare var dropdowns:any;
 declare var rfTypes:any;
 declare var ffTypes:any;
 declare var setFfType:Function;
-declare var nlapiSetFieldValue:Function;
+declare var setRfType:Function;
+
 
 declare var fieldFinderVersion:string;
 
@@ -70,8 +71,6 @@ export const relatedTableDataIds:any = {
 };
 
 // Initialize field finder once form is fully loaded by NetSuite
-
-
 if (typeof NS != 'undefined') {
     if (NS.form.isInited())
         initializeFieldFinder();
@@ -526,14 +525,12 @@ export class FieldFinderDropdown {
     async addRelatedTableFields(tableId: string) {
         var relatedTableDetails:any;
         const machineName = this.nsDropdown.hddn?.machine?.name || this.nsDropdown.name;
-        if (this.relatedTablesAdded.includes(`${machineName}_${tableId}`)) {
+        if (this.relatedTablesAdded.includes(`${machineName}_${tableId}`))
             return false; // Ignore if we have already added this table
-
-        }
         const selectedIndex = this.nsDropdown.getIndexForValue(tableId); // Get index where user clicked
-        if (!selectedIndex) {
+        if (!selectedIndex)
             return false;
-        }
+
         try {
             relatedTableDetails = await this.getRelatedTableDetails(tableId);
         } catch (err) {
@@ -545,10 +542,14 @@ export class FieldFinderDropdown {
         this.nsDropdown.close();
 
         // Add all of the related fields to the current active dropdown
+        var insertAtLineNumber = selectedIndex+1;
         for (let field of relatedTableDetails.fields) {
             if (field.value == '')
                 continue;
-            this.nsDropdown.addOption(`${relatedTableDetails.labelName} : ${field.text}`,field.value,selectedIndex+1);
+            this.nsDropdown.addOption(`${relatedTableDetails.labelName} : ${field.text}`,field.value,insertAtLineNumber);
+            if (machineName == 'returnfields')
+                setRfType(field.value,'');
+            insertAtLineNumber++;
         }
         this.relatedTablesAdded.push(`${machineName}_${tableId}`);
         this.nsDropdown.buildDiv(); // Rebuild the DIV now that we have added new fields

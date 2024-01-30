@@ -7,6 +7,10 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.27
+- Correct issue where selecting a related field resulted in an error and unable to save the search.
+- Correct issue where related fields were sorted in descending order.
+
 ### 0.26
 - Migrate codebase to Typescript
 - Add unit tests

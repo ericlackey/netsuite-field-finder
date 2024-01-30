@@ -20,10 +20,14 @@ declare global {
   var machines: any;
   var dropdowns: any;
   var fieldFinderVersion: string;
+  var setRfType:Function;
 }
 
 global.NS = new MockNSCore();
 global.fieldFinderVersion = "0.01";
+global.setRfType = () => {
+  return true;
+}
 
 /* Create FieldFinder config */
 const ffSettingsDefault:FieldFinderSettings = {
