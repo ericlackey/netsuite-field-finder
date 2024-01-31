@@ -140,6 +140,8 @@ export function handleButtonClick(fieldFinderDropdown: FieldFinderDropdown, butt
 
 // Handle when user clicks on field selector
 export function handleFieldSelectorClick(fieldFinderDropdown: FieldFinderDropdown) {
+    if (!fieldFinderDropdown.nsDropdown.div?.fieldFinderLoaded)
+        fieldFinderDropdown.softReload();
     if (!fieldFinderDropdown.nsDropdown.getIndex())
         fieldFinderDropdown.reset();
     fieldFinderDropdown.setFocusOnTextBox();
@@ -215,7 +217,7 @@ export class FieldFinderDropdown {
         this.addFieldFinderFilterElements();
         this.addFieldFinderFooterElement();
         this.configureAutoFocusOnTextBox();
-
+        this.nsDropdown.div.fieldFinderLoaded = true;
     }
 
     enableMultiSelectIfAvailable() {
@@ -225,7 +227,7 @@ export class FieldFinderDropdown {
 
     prepareDropdownOptions() {
         this.options = [];
-        this.nsDropdown.valueArray.forEach((fieldId:number, index:number) => {
+        this.nsDropdown.valueArray.forEach((fieldId:string, index:number) => {
             let newOpt = new FieldFinderDropdownOption(this,index);
             this.options.push(newOpt);
             if (newOpt.fieldType == FieldType.CUSTOM || newOpt.fieldType == FieldType.CUSTOM_BODY || newOpt.fieldType == FieldType.CUSTOM_COLUMN) {
@@ -247,6 +249,7 @@ export class FieldFinderDropdown {
         this.prepareDropdownOptions();
         this.nsDropdown.div.insertBefore(this.fieldFinderElement,this.nsDropdown.div.childNodes[0]);
         this.nsDropdown.div.appendChild(this.footer);
+        this.nsDropdown.div.fieldFinderLoaded = true;
     }
 
     configureFieldClickHandler() {
@@ -447,6 +450,7 @@ export class FieldFinderDropdown {
         for (let f of selectedFields) {
             const dropdownIndex = this.nsDropdown.valueToIndexMap[f];
             const dropdownOption = this.options[dropdownIndex];
+            if (!dropdownOption) continue;
             dropdownOption.select();
             this.selectedOptions.push(dropdownOption);
         }
@@ -606,7 +610,7 @@ export class FieldFinderDropdownOption {
     dropdown: FieldFinderDropdown;
 
     constructor(dropdown:FieldFinderDropdown, index:number) {
-        this.element = dropdown.nsDropdown.div.childNodes[index];
+        this.element = dropdown.nsDropdown.divArray[index];
         this.dropdown = dropdown;
         this.index = index;
         this.hidden = false;

@@ -7,6 +7,9 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.28
+- Second attempt to fix issues where adding a related field result in an error. The problem was related to adding a related field through the native related tables interface. 
+
 ### 0.27
 - Correct issue where selecting a related field resulted in an error and unable to save the search.
 - Correct issue where related fields were sorted in descending order.
