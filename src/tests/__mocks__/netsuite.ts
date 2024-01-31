@@ -134,8 +134,8 @@ export class MockNSDropdown {
     addOption(optionText:string,optionId:string,location:number) {
       const nsDropdownOpt = document.createElement('div');
       nsDropdownOpt.textContent = optionText;
-      this.div.appendChild(nsDropdownOpt);
-      this.valueArray.splice(location, 0, optionId);
+      this.divArray.splice(location,0,nsDropdownOpt);
+      this.valueArray.splice(location,0,optionId);
       this.textArray.splice(location,0,optionText);
       this.valueToIndexMap = [];
       for (var index in this.valueArray) {
@@ -143,6 +143,11 @@ export class MockNSDropdown {
       }
     }
     buildDiv() {
+      this.div.replaceChildren();
+      div:HTMLDivElement;
+      for (let div of this.divArray as HTMLDivElement[]) {
+        this.div.appendChild(div);
+      }
       return true;
     }
 }
