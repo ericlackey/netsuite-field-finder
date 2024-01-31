@@ -142,6 +142,9 @@ export function handleButtonClick(fieldFinderDropdown: FieldFinderDropdown, butt
 export function handleFieldSelectorClick(fieldFinderDropdown: FieldFinderDropdown) {
     if (!fieldFinderDropdown.nsDropdown.getIndex())
         fieldFinderDropdown.reset();
+    if (fieldFinderDropdown.nsDropdown.div?.fieldFinderEnabled) {
+
+    }
     fieldFinderDropdown.setFocusOnTextBox();
 }
 
@@ -215,7 +218,6 @@ export class FieldFinderDropdown {
         this.addFieldFinderFilterElements();
         this.addFieldFinderFooterElement();
         this.configureAutoFocusOnTextBox();
-
     }
 
     enableMultiSelectIfAvailable() {
@@ -446,10 +448,14 @@ export class FieldFinderDropdown {
         this.selectedOptions = [];
         for (let f of selectedFields) {
             const dropdownIndex = this.nsDropdown.valueToIndexMap[f];
-            const dropdownOption = this.options[dropdownIndex];
+            let dropdownOption = this.options[dropdownIndex];
+            if (!dropdownOption) {
+                dropdownOption = new FieldFinderDropdownOption(this,dropdownIndex);
+            }
             dropdownOption.select();
             this.selectedOptions.push(dropdownOption);
         }
+        console.log(this);
     }
 
     relatedTableUrl(machineName:string,tableId:string) {
@@ -606,7 +612,7 @@ export class FieldFinderDropdownOption {
     dropdown: FieldFinderDropdown;
 
     constructor(dropdown:FieldFinderDropdown, index:number) {
-        this.element = dropdown.nsDropdown.div.childNodes[index];
+        this.element = dropdown.nsDropdown.divArray[index];
         this.dropdown = dropdown;
         this.index = index;
         this.hidden = false;
