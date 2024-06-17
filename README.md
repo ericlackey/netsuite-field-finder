@@ -7,6 +7,9 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.29
+- Allow extension to work in Mass Update utility
+
 ### 0.28
 - Second attempt to fix issues where adding a related field result in an error. The problem was related to adding a related field through the native related tables interface. 
 
