@@ -15,7 +15,8 @@ type FieldFinderSettings = {
 type FieldTypeStatus = {
     standardFields: boolean,
     customFields: boolean,
-    relatedTableFields: boolean
+    relatedTableFields: boolean,
+    formulaFields: boolean;
 }
 
 type RelatedTableUrls = {
@@ -31,4 +32,5 @@ type FieldFinderButtons = {
     custom?: HTMLButtonElement;
     related?: HTMLButtonElement;
     standard?: HTMLButtonElement;
+    formula?: HTMLButtonElement;
 };
