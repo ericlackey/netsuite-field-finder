@@ -7,6 +7,9 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.31
+- Add a button for filtering on formulas
+
 ### 0.29
 - Allow extension to work in Mass Update utility
 

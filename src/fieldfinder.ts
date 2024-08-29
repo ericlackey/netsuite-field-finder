@@ -39,7 +39,8 @@ export enum FieldType {
     CUSTOM = 'Custom Field',
     CUSTOM_BODY = 'Custom Body',
     CUSTOM_COLUMN = 'Custom Column',
-    STANDARD = 'Standard Field'
+    STANDARD = 'Standard Field',
+    FORMULA = 'Formula Field'
 }
 
 // Define dropdowns name that will be replaced by Field Finder UI
@@ -179,7 +180,8 @@ export class FieldFinderDropdown {
     fieldTypeStatus:FieldTypeStatus = {
         standardFields: false,
         relatedTableFields: false,
-        customFields: false
+        customFields: false,
+        formulaFields: false
     };
     searchInputField = document.createElement('input');
     fieldFinderElement = document.createElement('div');
@@ -191,8 +193,10 @@ export class FieldFinderDropdown {
     customOptions: FieldFinderDropdownOption[] = [];
     standardOptions: FieldFinderDropdownOption[] = [];
     relatedOptions: FieldFinderDropdownOption[] = [];
+    formulaOptions: FieldFinderDropdownOption[] = [];
     hasRelatedTableFields = false;
     hasCustomFields = false;
+    hasFormulaFields = false;
     buttons: FieldFinderButtons = {};
     hasMachine = false;
 
@@ -237,6 +241,10 @@ export class FieldFinderDropdown {
             else if (newOpt.fieldType == FieldType.RELATED) {
                 this.relatedOptions.push(newOpt);
                 this.hasRelatedTableFields = true;
+            }
+            else if (newOpt.fieldType == FieldType.FORMULA) {
+                this.formulaOptions.push(newOpt);
+                this.hasFormulaFields = true;
             }
             else
                 this.standardOptions.push(newOpt);
@@ -295,7 +303,7 @@ export class FieldFinderDropdown {
             dropdownWidth = dropdownWidth-FieldAttributeWidths.fieldType;
         if (!this.settings.attributes.fieldId)
             dropdownWidth = dropdownWidth-FieldAttributeWidths.fieldId;
-        dropdownWidth = (dropdownWidth < 400) ? 400 : dropdownWidth; // Minimum width is 450
+        dropdownWidth = (dropdownWidth < 450) ? 450 : dropdownWidth; // Minimum width is 450
         this.nsDropdown.div.style.setProperty('width',`${dropdownWidth}px`);
         this.nsDropdown.div.style.setProperty('margin-bottom','25px');
         this.nsDropdown.div.style.setProperty('margin-top','32px');
@@ -311,6 +319,8 @@ export class FieldFinderDropdown {
             this.buttons.custom = buttonGroup.appendChild(this.createFilterButton('customFields', 'Custom'));
         if (this.hasRelatedTableFields)
             this.buttons.related = buttonGroup.appendChild(this.createFilterButton('relatedTableFields', 'Related'));
+        if (this.hasFormulaFields)
+            this.buttons.formula = buttonGroup.appendChild(this.createFilterButton('formulaFields', 'Formula'));
         this.fieldFinderElement.appendChild(buttonGroup);
     }
 
@@ -419,6 +429,7 @@ export class FieldFinderDropdown {
         this.fieldTypeStatus.customFields = false;
         this.fieldTypeStatus.relatedTableFields = false;
         this.fieldTypeStatus.standardFields = false;
+        this.fieldTypeStatus.formulaFields = false;
         this.filterDropdown();
     }
 
@@ -667,6 +678,8 @@ export class FieldFinderDropdownOption {
             return FieldType.CUSTOM_BODY;
         else if (fieldId.match(/^(custcol|custrecord|custentity|custitem)/))
             return FieldType.CUSTOM;
+        else if (fieldId.match(/\_formula/))
+            return FieldType.FORMULA;
         else if (this.fieldName.endsWith('Fields...'))
             return FieldType.RELATED
         else
@@ -753,7 +766,8 @@ export class FieldFinderDropdownOption {
         const showCustomFields = this.dropdown.fieldTypeStatus.customFields;
         const showRelatedTableFields = this.dropdown.fieldTypeStatus.relatedTableFields;
         const showStandardFields = this.dropdown.fieldTypeStatus.standardFields;
-        const set = new Set([showCustomFields,showRelatedTableFields,showStandardFields]);
+        const showFormulaFields = this.dropdown.fieldTypeStatus.formulaFields;
+        const set = new Set([showCustomFields,showRelatedTableFields,showStandardFields,showFormulaFields]);
         if (set.size == 1) {
             this.show();
             return;
@@ -762,6 +776,8 @@ export class FieldFinderDropdownOption {
             (showRelatedTableFields) ? this.show() : this.hide();
         else if (this.fieldType == FieldType.CUSTOM || this.fieldType == FieldType.CUSTOM_BODY || this.fieldType == FieldType.CUSTOM_COLUMN)
             (showCustomFields) ? this.show() : this.hide();
+        else if (this.fieldType == FieldType.FORMULA)
+            (showFormulaFields) ? this.show() : this.hide();
         else if (this.fieldType == FieldType.STANDARD)
             (showStandardFields) ? this.show() : this.hide();
     }
