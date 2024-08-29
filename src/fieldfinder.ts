@@ -426,6 +426,7 @@ export class FieldFinderDropdown {
         this.buttons.custom?.classList.remove('ff_btn_enabled');
         this.buttons.related?.classList.remove('ff_btn_enabled');
         this.buttons.standard?.classList.remove('ff_btn_enabled');
+        this.buttons.formula?.classList.remove('ff_btn_enabled');
         this.fieldTypeStatus.customFields = false;
         this.fieldTypeStatus.relatedTableFields = false;
         this.fieldTypeStatus.standardFields = false;
