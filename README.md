@@ -7,6 +7,10 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.32
+- Fix display issue in Redwood theme where line break was causing each option to be much larger
+- Fix issue where text search returned results that did not highlight anything due to search being made on prefix of field ID that is not shown to user 
+
 ### 0.31
 - Add a button for filtering on formulas
 

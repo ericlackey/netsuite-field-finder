@@ -27,7 +27,7 @@ var ffRecType = -1;
 
 // Define field widths for field attributes
 enum FieldAttributeWidths {
-    dataType = 104,
+    dataType = 80,
     fieldType = 112,
     fieldName = 280,
     fieldId = 280,
@@ -170,7 +170,6 @@ export async function handleRelatedTableClick(fieldFinderDropdown:FieldFinderDro
 }
 
 export class FieldFinderDropdown {
-
     nsDropdown: any;
     searchType: string;
     recType: number;
@@ -791,13 +790,14 @@ export class FieldFinderDropdownOption {
             return;
         }
         const searchRegex = new RegExp(searchText, 'gi');
-        if ((this.fieldName || '').search(searchRegex)==-1
+        if (searchRegex.test(this.fieldName || '')==false
             && (!this.dropdown.settings.attributes.fieldId 
-                || (this.fieldId || '').search(searchRegex)==-1)) {
+                || searchRegex.test(this.prettyFieldId() || '')==false)) {
             this.hide();
             this.resetOptionToOriginal();
         }
         else {
+
             this.highlightMatchedText();
             this.show();
         }

@@ -474,10 +474,10 @@ describe.each(testDropdowns)("Test Field Finder %s with features %s", (dropdownK
         expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("520px");
       }
       else if (fieldTypeEnabled && fieldIdEnabled && !dataTypeEnabled) {
-        expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("696px");
+        expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("720px");
       }
       else if (fieldTypeEnabled && !fieldIdEnabled && !dataTypeEnabled) {
-        expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("416px");
+        expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("450px");
       }
       else {
         expect(fieldFinder.nsDropdown.div.style.getPropertyValue('width')).toBe("800px");
