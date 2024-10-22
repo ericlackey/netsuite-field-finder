@@ -673,9 +673,9 @@ export class FieldFinderDropdownOption {
     getFieldType() {
         let fieldId = this.fieldId.toLowerCase();
         if (fieldId.match(/^(custbody)/))
-            return FieldType.CUSTOM_COLUMN;
-        else if (fieldId.match(/^(custcol)/))
             return FieldType.CUSTOM_BODY;
+        else if (fieldId.match(/^(custcol)/))
+            return FieldType.CUSTOM_COLUMN;
         else if (fieldId.match(/^(custcol|custrecord|custentity|custitem)/))
             return FieldType.CUSTOM;
         else if (fieldId.match(/\_formula/))
