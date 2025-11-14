@@ -1,6 +1,6 @@
 {
   "name": "netsuite-field-finder",
-  "version": "0.35",
+  "version": "0.36",
   "description": "Allows user to quickly find fields in Saved Search and Workflows. Also provides additional details about fields in dropdown.",
   "main": "index.js",
   "scripts": {

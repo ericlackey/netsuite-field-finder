@@ -7,6 +7,9 @@ A Chrome & Firefox browser extension for NetSuite that allows users to quicky fi
 
 ## Release Notes
 
+### 0.36
+- Fix an issue where extension could not initialize in Firefox browsers
+
 ### 0.35
 - Fix an issue related to multiselect where when inserting a new line between existing lines and then using multiselect would result in the selected field being added to end of all lines and resulting in an empty line in the middle. NS would then prompt user to enter value for field causing confusion. Now it correctly inserts the added field into the row the user is currently on instead of at the end.
 - Fix another issue related to multiselect where the last line was not cleared properly and requiring the user to click the cancel button before saving/running search.

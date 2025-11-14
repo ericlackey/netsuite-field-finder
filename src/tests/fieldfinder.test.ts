@@ -1,3 +1,4 @@
+import { relatedTableDataIds } from "../constants";
 import {
   handleButtonClick,
   handleFieldSelectorClick,
@@ -5,11 +6,10 @@ import {
   handleKey,
   handleMultiSelectClick,
   handleRelatedTableClick,
-  initializeFieldFinder,
   FieldFinderDropdown,
-  relatedTableDataIds,
   FieldType
-} from "../fieldfinder";
+} from "../dropdown";
+import { initializeFieldFinder } from "../fieldfinder";
 import { MockNSDropdown, MockNsMachine, MockNSCore, MockHtmlResponse, MockHtmlResponse2 } from "./__mocks__/netsuite";
 import fetchMock from "jest-fetch-mock";
 fetchMock.enableMocks();
